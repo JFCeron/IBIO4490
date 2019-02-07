@@ -211,9 +211,9 @@ find BSR/BSDS500/data/images | grep "\\." | awk '{ gsub(".*\\.",""); print }' | 
 El directorio únicamente contiene imágenes de extensión ``jpg``. Las únicas resoluciones de las imágenes son (312,481) y (481,321):
 
 ```bash
-find BSR -name "*jpg" | xargs identify -format "%w,%h\n" | sort | uniq -c
+find BSR/BSDS500/data/images -name "*jpg" | xargs identify -format "%w,%h\n" | sort | uniq -c
 ```
-
+![](resoluciones.PNG)
 6. How many of them are in *landscape* orientation (opposed to *portrait*)? Tip: use ``awk`` and ``cut``
 
 En el anterior comando, el parámetro ``-c`` indica que se imprimen conteos de los archivos con cada una de las dos resoluciones. De este vemos que tenemos 152 en orientación de retrato y 348 en orientación *landscape*.
