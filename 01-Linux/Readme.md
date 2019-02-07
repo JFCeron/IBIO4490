@@ -176,18 +176,55 @@ See [here](ssh.md) for different types of SSH connection with respect to your OS
 
 1. What is the ``grep``command?
 
+El comando ``grep`` permite comparar una expresión regular con un archivo. El primer parámetro es la expresión y el segundo la dirección del archivo:
+![](grep.PNG)
+
 2. What is the meaning of ``#!/bin/python`` at the start of scripts?
+
+La dirección que le sigue a ``#!`` indica el programa que debe interpretar el resto del archivo, en este caso este se encuentra en ``/bin/python``.
 
 3. Download using ``wget`` the [*bsds500*](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html#bsds500) image segmentation database, and decompress it using ``tar`` (keep it in you hard drive, we will come back over this data in a few weeks).
  
+Para este fin ejecuté los siguientes dos comandos:
+
+```bash
+wget http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz
+tar -xzvf BSR_bsds500.tgz
+```
+ 
 4. What is the disk size of the uncompressed dataset, How many images are in the directory 'BSR/BSDS500/data/images'?
+
+El dataset es de 73MB y el directorio tiene 37836 imágenes.
+```bash
+du -sh BSR
+du BSR/BSDS500/data/images
+```
  
 5. What are all the different resolutions? What is their format? Tip: use ``awk``, ``sort``, ``uniq`` 
 
+Primero identifiqué todas las extensiones de archivos bajo el directorio descargado ``BSR`` para saber cuáles corresponden a imágenes. Esto con el fin de buscar las imágenes por sus extensiones posteriormente.
+```bash
+find BSR/BSDS500/data/images | grep "\\." | awk '{ gsub(".*\\.",""); print }' | sort | uniq
+```
+![](extensiones.PNG)
+
+El directorio únicamente contiene imágenes de extensión ``jpg``. Las únicas resoluciones de las imágenes son (312,481) y (481,321):
+
+```bash
+find BSR -name "*jpg" | xargs identify -format "%w,%h\n" | sort | uniq -c
+```
+
 6. How many of them are in *landscape* orientation (opposed to *portrait*)? Tip: use ``awk`` and ``cut``
- 
+
+En el anterior comando, el parámetro ``-c`` indica que se imprimen conteos de los archivos con cada una de las dos resoluciones. De este vemos que tenemos 152 en orientación de retrato y 348 en orientación *landscape*.
+
 7. Crop all images to make them square (256x256) and save them in a different folder. Tip: do not forget about  [imagemagick](http://www.imagemagick.org/script/index.php).
 
+Para lograr este objetivo utilicé un pipeline en el cual en primer lugar se encuentran todas las imágenes en la carpeta de interés (``BSR/BSDS500/data/images``), y luego uso ``mogrify`` para realizar el crop:
+
+```bash
+find BSR/BSDS500/data/images -name "*jpg" | xargs mogrify -crop 256x256+0+0 -path ./cropped
+```
 
 # Report
 
