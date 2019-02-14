@@ -1,3 +1,4 @@
+print("Puede ser necesario ejecutar con python3")
 # manipulacion de imagenes
 from PIL import Image                                                                                
 from PIL import ImageDraw
