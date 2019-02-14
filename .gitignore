@@ -3,6 +3,7 @@ Ignore/
 *.ppt
 *.odt
 BSR/
+cropped/
 *.tgz
 *solution*
 solution/
