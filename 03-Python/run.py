@@ -10,7 +10,7 @@ import numpy as np
 # funcionalidades de carpetas
 import os
 # descarga
-import urllib
+import urllib.request
 # descompresion
 import tarfile
 # tiempo de ejecucion
