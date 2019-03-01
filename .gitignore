@@ -10,3 +10,6 @@ solution/
 _data/
 *.pyc
 .ipynb*
+/05-Textons/cifar-10-batches-py/
+.npy*
+.pickle*

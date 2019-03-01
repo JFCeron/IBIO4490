@@ -6,7 +6,7 @@ def unpickle(file):
     with open(file, 'rb') as fo:
         _dict = pickle.load(fo, encoding='latin1')
         _dict['labels'] = np.array(_dict['labels'])
-        _dict['data'] = _dict['data'].reshape(_dict['data'].shape[0], 3, 32, 32).transpose(0,2,3,1)
+        _dict['data'] = _dict['data'].reshape(_dict['data'].shape[0], 3, 256, 256).transpose(0,2,3,1)
 
     return _dict
 
