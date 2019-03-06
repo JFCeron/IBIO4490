@@ -13,3 +13,4 @@ _data/
 /05-Textons/cifar-10-batches-py/
 .npy*
 .pickle*
+BSDS_small
