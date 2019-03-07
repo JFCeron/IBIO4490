@@ -24,6 +24,8 @@ def check_dataset(folder):
         os.system("wget http://157.253.196.67/BSDS_small.zip")
         os.system("unzip BSDS_small.zip")
         os.system("rm BSDS_small.zip")
+        assert os.path.isdir(folder) , "Download unsuccessful, check connection."
+    
 
 if __name__ == '__main__':
     import argparse
@@ -34,6 +36,7 @@ if __name__ == '__main__':
     from skimage import io, color
     from sklearn.metrics import mutual_info_score
     import scipy.io as sio
+    from showSaveResults import showSaveResults
     parser = argparse.ArgumentParser()
     parser.add_argument('--color', type=str, default='rgb', choices=['rgb', 'lab', 'hsv', 'rgb+xy', 'lab+xy', 'hsv+xy']) # If you use more please add them to this list.
     parser.add_argument('--k', type=int, default=4)
@@ -44,7 +47,7 @@ if __name__ == '__main__':
     # check for dataset, download it if necessary
     check_dataset(opts.img_file.split('/')[0])
     # read the image and make necessary transformations
-    img = io.imread("BSDS_small/train/"+opts.img_file)
+    img = io.imread(opts.img_file)
     
     # map to the correct color space
     if "lab" in opts.color:
@@ -69,28 +72,13 @@ if __name__ == '__main__':
     if "hierarchical" in opts.method:
         clustering = hierarchical(img, opts.k)
         
-    # show the original image,
-    f, axarr = plt.subplots(1, 3, figsize = (10, 40))
-    axarr[0].imshow(img)
-    axarr[0].axis('off')
-    axarr[0].set_title("Original")
-    # this clustering,
-    axarr[1].imshow(clustering)
-    axarr[1].axis('off')
-    axarr[1].set_title("Clustering")
-    # and the ground truth
-    truth = sio.loadmat("BSDS_small/train/"+opts.img_file.replace('jpg', 'mat'))
-    segm = truth['groundTruth'][0,4][0][0]['Segmentation']
-    axarr[2].imshow(segm)
-    axarr[2].axis('off')
-    axarr[2].set_title("Truth")
-    # a nice title
-    result_title = opts.img_file+"_k="+str(opts.k)+"_"+opts.method
-    plt.subplots_adjust(wspace=0, hspace=0)
-    # store the results
-    f.savefig(result_title.replace(".jpg","")+".png", bbox_inches="tight", pad_inches=0)
-    # f.show()
+    # read the truth
+    truth = sio.loadmat(opts.img_file.replace('jpg', 'mat'))
+    truth = truth['groundTruth'][0,4][0][0]['Segmentation']    
+    # plot and save the results with a nice title
+    title = opts.img_file.split("/")[-1].replace(".jpg","")+"_k="+str(opts.k)+"_"+opts.method
+    showSaveResults(img, clustering, truth, title)
     
     # calculate and report mutual information
-    print("Mutual information: "+str(mutual_info_score(segm.flatten(),clustering.flatten())))
-    print("Mutual information between truth and uniformly random k-clustering: "+str(mutual_info_score(segm.flatten(),[randint(0,opts.k) for i in range(segm.flatten().shape[0])])))
+    print("Mutual information (more is better): "+str(mutual_info_score(truth.flatten(),clustering.flatten())))
+    print("Mutual information between truth and uniformly random k-clustering (for comparison): "+str(mutual_info_score(truth.flatten(),[randint(0,opts.k) for i in range(truth.flatten().shape[0])])))
