@@ -30,6 +30,9 @@ def check_dataset(folder):
 if __name__ == '__main__':
     import argparse
     from watershed import watershed
+    from kmeans import kmeans
+    from gmm import gmm
+    from hierarchical import hierarchical
     import numpy as np
     from random import randint
     import matplotlib.pyplot as plt
