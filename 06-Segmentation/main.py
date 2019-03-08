@@ -48,7 +48,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     
     # check for dataset, download it if necessary
-    #check_dataset(opts.img_file.split('/')[0])
+    check_dataset(opts.img_file.split('/')[0])
     # read the image and make necessary transformations
     imgoriginal = io.imread(opts.img_file)
     img=imgoriginal
