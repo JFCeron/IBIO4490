@@ -48,10 +48,10 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     
     # check for dataset, download it if necessary
-    check_dataset(opts.img_file.split('/')[0])
+    #check_dataset(opts.img_file.split('/')[0])
     # read the image and make necessary transformations
-    img = io.imread(opts.img_file)
-    
+    imgoriginal = io.imread(opts.img_file)
+    img=imgoriginal
     # map to the correct color space
     if "lab" in opts.color:
         img = color.rgb2lab(img)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         img = color.rgb2hsv(img)
     # add spatial dimensions if requested. Doesn't make sense for watershed clustering
     if "xy" in opts.color and opts.method!="watershed":
-        temp = img
+        temp=img.copy()
         img = np.zeros((img.shape[0],img.shape[1],img.shape[2]+2))
         img[:,:,0:temp.shape[2]] = temp
         img[:,:,temp.shape[2]] = np.array(range(img.shape[0])).reshape(img.shape[0],1)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     truth = truth['groundTruth'][0,4][0][0]['Segmentation']    
     # plot and save the results with a nice title
     title = opts.img_file.split("/")[-1].replace(".jpg","")+"_k="+str(opts.k)+"_"+opts.method
-    showSaveResults(img, clustering, truth, title)
+    showSaveResults(imgoriginal, clustering, truth, title)
     
     # calculate and report mutual information
     print("Mutual information (more is better): "+str(mutual_info_score(truth.flatten(),clustering.flatten())))
