@@ -1,0 +1,8 @@
+imgDir = '/home/secg95/repo/IBIO4490/07-BSDS/BSR/BSDS500/data/images/lab7Temporal/test'
+gtDir = '/home/secg95/repo/IBIO4490/07-BSDS/BSR/BSDS500/data/groundTruth/test'
+inDir='/home/secg95/repo/IBIO4490/07-BSDS/BSR/BSDS500/data/images/lab7Temporal/kmeans2'
+outDir='/home/secg95/repo/IBIO4490/07-BSDS/BSR/BSDS500/data/images/lab7Temporal/kmeansBenchMarks'
+
+
+ nthresh=200 
+radius, thinpb
