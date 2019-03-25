@@ -80,27 +80,29 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------
     classes = sorted(os.listdir(conf.calDir))
     classes = classes[:conf.numClasses]
-    images = [] 
-    imageClass = [] 
+    images = []
+    imageClass = []
     for ci in range(len(classes)):
         ims = glob.glob(os.path.join(conf.calDir, classes[ci], '*.jpg'))
-        ims = random_subset(ims, conf.numTrain + conf.numTest) 
+        ims = random_subset(ims, conf.numTrain + conf.numTest)
         images.extend(ims)
         imageClass.extend([ci]*len(ims))
 
+    # las primeras 15 imagenes de cada categoria son el entreno, las otras 15 son de prueba
     selTrain = np.where(np.arange(len(images))%(conf.numTrain + conf.numTest)<conf.numTrain)[0].tolist()
     selTest = np.where(np.arange(len(images))%(conf.numTrain + conf.numTest)>=conf.numTrain)[0].tolist()
 
     model = NameSpace()
-    model.classes = classes 
-    model.phowOpts = conf.phowOpts 
-    model.numSpatialX = conf.numSpatialX 
-    model.numSpatialY = conf.numSpatialY 
-    model.quantizer = conf.quantizer 
-    model.vocab = [] 
-    model.w = [] 
-    model.b = [] 
-    model.classify = classify 
+    model.classes = classes
+    model.phowOpts = conf.phowOpts
+    model.numSpatialX = conf.numSpatialX
+    model.numSpatialY = conf.numSpatialY
+    model.quantizer = conf.quantizer
+    model.vocab = []
+    model.w = []
+    model.b = []
+    # viene de utils
+    model.classify = classify
 
     # --------------------------------------------------------------------
     #                     Train vocabulary
@@ -109,7 +111,7 @@ if __name__ == '__main__':
     if not os.path.isfile(conf.vocabPath):
 
         # Get some PHOW descriptors to train the dictionary
-        selTrainFeats = random_subset(selTrain, 30) 
+        selTrainFeats = random_subset(selTrain, 30)
         descrs = []
         for ii in range(len(selTrainFeats)):
             im = imageio.imread(images[selTrainFeats[ii]])

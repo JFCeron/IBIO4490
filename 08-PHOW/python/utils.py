@@ -36,9 +36,9 @@ def untar(fname, where):
         tar = tarfile.open(fname)
         tar.extractall(path=where)
         tar.close()
-        print "Extracted in Current Directory"
+        print ("Extracted in Current Directory")
     else:
-        print "Not a tar.gz file: '%s'."%fname
+        print ("Not a tar.gz file: '%s'."%fname)
 
 
 # -------------------------------------------------------------------------

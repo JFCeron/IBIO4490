@@ -54,8 +54,8 @@ function phow_caltech101()
 conf.calDir = 'data/caltech-101' ;
 conf.dataDir = 'data/' ;
 conf.autoDownloadData = true ;
-conf.numTrain = 15 ;
-conf.numTest = 15 ;
+conf.numTrain = 50 ;
+conf.numTest = 35 ;
 conf.numClasses = 102 ;
 conf.numWords = 600 ;
 conf.numSpatialX = [2 4] ;
