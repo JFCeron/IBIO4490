@@ -14,3 +14,4 @@ _data/
 .npy*
 .pickle*
 BSDS_small
+LabHOG
