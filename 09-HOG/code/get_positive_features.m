@@ -28,8 +28,10 @@ function features_pos = get_positive_features(train_path_pos, feature_params)
 %  http://www.vlfeat.org/overview/hog.html   (Tutorial)
 % rgb2gray
 
+% load the training image names and initialize the response matrix
 image_files = dir( fullfile( train_path_pos, '*.jpg') ); %Caltech Faces stored as .jpg
 num_images = length(image_files);
+features_pos = zeros(num_images, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
 
-% placeholder to be deleted - THIS ONLY WORKS FOR THE INITIAL DEMO
-features_pos = rand(100, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+for i = 1:num_images
+	img = imread(strcat(train_path_pos,'/',image_files(i).name))
