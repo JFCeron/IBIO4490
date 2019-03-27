@@ -34,4 +34,7 @@ num_images = length(image_files);
 features_pos = zeros(num_images, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
 
 for i = 1:num_images
-	img = imread(strcat(train_path_pos,'/',image_files(i).name))
+	img = imread(strcat(train_path_pos,'/',image_files(i).name));
+	hog = vl_hog(single(img), feature_params.hog_cell_size);
+	features_pos(i,:) = reshape(hog,1,(feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+end
