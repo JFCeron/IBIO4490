@@ -42,13 +42,17 @@ else
 end
 
 if strcmp(topic, 'doc')
-  topic = 'home' ;
+  asFunction = 'index.html' ;
+  asTopic = 'index.html' ;
+else
+  asFunction = fullfile('mdoc', [lower(topic) '.html']) ;
+  asTopic = fullfile('api', [lower(topic) '.html']) ;
 end
 
-[ids,urls] = textread(fullfile(local, 'index.txt'),'%s%s','delimiter','|') ;
-k = find(strcmp(topic,ids)) ;
-if numel(k) > 0
-  web(fullfile(prefix, urls{k(1)}))
+if exist(fullfile(local, asFunction), 'file')
+  web(fullfile(prefix, asFunction)) ;
+elseif exist(fullfile(local, asTopic), 'file')
+  web(fullfile(prefix, asTopic)) ;
 else
   error('''%s'' is not a valid function or topic.', topic) ;
 end

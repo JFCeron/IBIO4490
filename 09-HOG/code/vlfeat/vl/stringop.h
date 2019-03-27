@@ -16,7 +16,7 @@ the terms of the BSD license (see the COPYING file).
 
 #include "generic.h"
 
-/** @brief File protocols */
+/* file protocols */
 enum {
   VL_PROT_UNKNOWN = -1, /**< unknown protocol */
   VL_PROT_NONE    =  0, /**< no protocol      */

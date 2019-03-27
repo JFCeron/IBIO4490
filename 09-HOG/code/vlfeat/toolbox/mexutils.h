@@ -4,7 +4,6 @@
  **/
 
 /*
-Copyright (C) 2018 Andrea Vedaldi.
 Copyright (C) 2007-12 Andrea Vedaldi and Brian Fulkerson.
 All rights reserved.
 
@@ -29,9 +28,10 @@ the terms of the BSD license (see the COPYING file).
 #define vsnprintf _vsnprintf
 #endif
 
-#ifndef MWSIZE_MAX
-typedef int unsigned mwSize ;
-typedef int mwIndex ;
+#if (! defined(MX_API_VER) || (MX_API_VER < 0x07030000)) && \
+  (! defined(HAVE_OCTAVE))
+typedef vl_uint32 mwSize ;
+typedef vl_int32 mwIndex ;
 #endif
 
 /** @brief Access MEX input argument */
@@ -638,7 +638,7 @@ vlmxEnvelopeArrayInVlArray (VlArray * v, mxArray * x)
     case mxUINT16_CLASS: type =  VL_TYPE_UINT16 ; break ;
     case mxUINT32_CLASS: type =  VL_TYPE_UINT32 ; break ;
     case mxUINT64_CLASS: type =  VL_TYPE_UINT64 ; break ;
-    default: assert(VL_FALSE) ; abort() ;
+    default: assert(VL_FALSE) ;
   }
 
   vl_array_init_envelope(v, mxGetData(x), type, numDimensions, vdimensions) ;

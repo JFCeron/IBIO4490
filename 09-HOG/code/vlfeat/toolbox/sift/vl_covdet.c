@@ -26,14 +26,10 @@ the terms of the BSD license (see the COPYING file).
 enum {
   opt_method = 0,
   opt_octave_resolution,
-  opt_num_octaves,
-  opt_base_scale,
   opt_double_image,
   opt_peak_threshold,
   opt_edge_threshold,
-  opt_laplacian_peak_threshold,
   opt_estimate_orientation,
-  opt_max_num_orientations,
   opt_estimate_affine_shape,
   opt_frames,
   opt_descriptor,
@@ -44,7 +40,6 @@ enum {
   opt_patch_resolution,
   opt_patch_relative_smoothing,
   opt_patch_relative_extent,
-  opt_allow_padded_warping,
   opt_verbose
 } ;
 
@@ -52,15 +47,11 @@ enum {
 vlmxOption  options [] = {
   {"Method",                1,   opt_method                  },
   {"OctaveResolution",      1,   opt_octave_resolution       },
-  {"NumOctaves",            1,   opt_num_octaves             },
-  {"BaseScale",             1,   opt_base_scale              },
   {"DoubleImage",           1,   opt_double_image            },
   {"PeakThreshold",         1,   opt_peak_threshold          },
   {"EdgeThreshold",         1,   opt_edge_threshold          },
-  {"LaplacianPeakThreshold",1,   opt_laplacian_peak_threshold},
 
   {"EstimateOrientation",   1,   opt_estimate_orientation    },
-  {"MaxNumOrientations",    1,   opt_max_num_orientations    },
   {"EstimateAffineShape",   1,   opt_estimate_affine_shape   },
 
   {"Frames",                1,   opt_frames                  },
@@ -73,7 +64,6 @@ vlmxOption  options [] = {
   {"PatchResolution",       1,   opt_patch_resolution        },
   {"PatchRelativeExtent",   1,   opt_patch_relative_extent   },
   {"PatchRelativeSmoothing",1,   opt_patch_relative_smoothing},
-  {"AllowPaddedWarping",    1,   opt_allow_padded_warping    },
   {"Verbose",               0,   opt_verbose                 },
   {0,                       0,   0                           }
 } ;
@@ -103,7 +93,7 @@ VlEnumerator vlCovDetDescriptorTypes [VL_COVDET_DESC_NUM] =
 
 /** ------------------------------------------------------------------
  ** @brief Export scale space into a MATLAB structure
- ** @param ss Pointer to the scale space to be exported
+ ** @param ss Pointer to the scale space to be xported
  ** @return Pointer to matlab structure with the scale space
  **/
 static mxArray *
@@ -156,12 +146,12 @@ _createArrayFromScaleSpace(VlScaleSpace const *ss)
 }
 
 /** ------------------------------------------------------------------
- ** @internal @brief Transpose descriptor
+ ** @internal @brief Transpose desriptor
  ** @param dst destination buffer.
  ** @param src source buffer.
  **
  ** The function writes to @a dst the transpose of the SIFT descriptor
- ** @a src. The transpose is defined as the descriptor that one
+ ** @a src. The tranpsose is defined as the descriptor that one
  ** obtains from computing the normal descriptor on the transposed
  ** image.
  **/
@@ -208,15 +198,11 @@ mexFunction(int nout, mxArray *out[],
   VlCovDetMethod method = VL_COVDET_METHOD_DOG;
   vl_bool estimateAffineShape = VL_FALSE ;
   vl_bool estimateOrientation = VL_FALSE ;
-  vl_size maxNumOrientations = 0 ;
 
   vl_bool doubleImage = VL_TRUE ;
   vl_index octaveResolution = -1 ;
-  vl_size numOctaves = 0 ;
-  double baseScale = -1 ;
   double edgeThreshold = -1 ;
   double peakThreshold = -1 ;
-  double lapPeakThreshold = -1 ;
 
   int descriptorType = -1 ;
   vl_index patchResolution = -1 ;
@@ -229,7 +215,6 @@ mexFunction(int nout, mxArray *out[],
   vl_int liopNumNeighbours = 4;
   float liopRadius = 6.0;
   float liopIntensityThreshold = VL_NAN_F ;
-  vl_bool allowPaddedWarping = VL_TRUE;
 
   double boundaryMargin = 2.0 ;
 
@@ -298,12 +283,6 @@ mexFunction(int nout, mxArray *out[],
       }
       break ;
 
-    case opt_max_num_orientations :
-      if (!vlmxIsPlainScalar(optarg) || (maxNumOrientations = (vl_index)*mxGetPr(optarg)) < 1) {
-        vlmxError(vlmxErrInvalidArgument, "MAXNUMORIENTATIONS must be an integer not smaller than 1.") ;
-      }
-      break ;
-
     case opt_double_image:
       if (!mxIsLogicalScalar(optarg)) {
         vlmxError(vlmxErrInvalidArgument, "DOUBLEIMAGE must be a logical scalar value.") ;
@@ -318,18 +297,6 @@ mexFunction(int nout, mxArray *out[],
       }
       break ;
 
-    case opt_num_octaves :
-      if (!vlmxIsPlainScalar(optarg) || (numOctaves = (vl_index)*mxGetPr(optarg)) < 1) {
-        vlmxError(vlmxErrInvalidArgument, "NUMOCTAVES must be an integer not smaller than 1.") ;
-      }
-      break ;
-
-    case opt_base_scale :
-      if (!vlmxIsPlainScalar(optarg) || (baseScale = *mxGetPr(optarg)) < 0) {
-        vlmxError(vlmxErrInvalidArgument, "BASESCALE must be a positive real.") ;
-      }
-      break ;
-
     case opt_edge_threshold :
       if (!vlmxIsPlainScalar(optarg) || (edgeThreshold = *mxGetPr(optarg)) < 1) {
         vlmxError(vlmxErrInvalidArgument, "EDGETHRESHOLD must be a real not smaller than 1.") ;
@@ -339,12 +306,6 @@ mexFunction(int nout, mxArray *out[],
     case opt_peak_threshold :
       if (!vlmxIsPlainScalar(optarg) || (peakThreshold = *mxGetPr(optarg)) < 0) {
         vlmxError(vlmxErrInvalidArgument, "PEAKTHRESHOLD must be a non-negative real.") ;
-      }
-      break ;
-        
-    case opt_laplacian_peak_threshold :
-      if (!vlmxIsPlainScalar(optarg) || (lapPeakThreshold = *mxGetPr(optarg)) < 0) {
-        vlmxError(vlmxErrInvalidArgument, "LAPLACIANPEAKTHRESHOLD must be a non-negative real.") ;
       }
       break ;
 
@@ -389,14 +350,6 @@ mexFunction(int nout, mxArray *out[],
         vlmxError(vlmxErrInvalidArgument, "LIOPINTENSITYTHRESHOLD is not a scalar.") ;
       }
       liopIntensityThreshold = *mxGetPr(optarg) ;
-      break ;
-
-    case opt_allow_padded_warping :
-      if (!mxIsLogicalScalar(optarg)) {
-        vlmxError(vlmxErrInvalidArgument, "ALLOWPADDEDWARPING must be a logical scalar value.") ;
-      } else {
-        allowPaddedWarping = *mxGetLogicals(optarg);
-      }
       break ;
 
     case opt_frames:
@@ -471,31 +424,19 @@ mexFunction(int nout, mxArray *out[],
     /* set covdet parameters */
     vl_covdet_set_transposed(covdet, VL_TRUE) ;
     vl_covdet_set_first_octave(covdet, doubleImage ? -1 : 0) ;
-    if (numOctaves > 0) vl_covdet_set_num_octaves(covdet, numOctaves) ;
     if (octaveResolution >= 0) vl_covdet_set_octave_resolution(covdet, octaveResolution) ;
-    if (baseScale > 0) vl_covdet_set_base_scale(covdet, baseScale) ;
-    if (maxNumOrientations > 0) vl_covdet_set_max_num_orientations(covdet, maxNumOrientations) ;
     if (peakThreshold >= 0) vl_covdet_set_peak_threshold(covdet, peakThreshold) ;
     if (edgeThreshold >= 0) vl_covdet_set_edge_threshold(covdet, edgeThreshold) ;
-    if (lapPeakThreshold >= 0) vl_covdet_set_laplacian_peak_threshold(covdet, lapPeakThreshold) ;
-    
+
     if (verbose) {
       VL_PRINTF("vl_covdet: doubling image: %s\n",
                 VL_YESNO(vl_covdet_get_first_octave(covdet) < 0)) ;
-      VL_PRINTF("vl_covdet: octave_resolution: %d\n", vl_covdet_get_octave_resolution(covdet)) ;
-      VL_PRINTF("vl_covdet: num_octaves: %d\n", vl_covdet_get_num_octaves(covdet)) ;
-      VL_PRINTF("vl_covdet: max_num_orientations: %d\n", vl_covdet_get_max_num_orientations(covdet)) ;
     }
-
-    /* Drop features which reach out of image. The property allow_padded_wrapping
-       is not used as it would complicate the memory management for the output
-       descriptors array. This way it drops all the features ahead. */
-    if (!allowPaddedWarping) boundaryMargin = patchRelativeExtent;
 
     /* process the image */
     vl_covdet_put_image(covdet, image, numRows, numCols) ;
 
-    /* fill with frames: either run the detector of poure them in */
+    /* fill with frames: eitehr run the detector of poure them in */
     if (numUserFrames > 0) {
       vl_index k ;
 
@@ -638,17 +579,18 @@ mexFunction(int nout, mxArray *out[],
 
     /* orientation estimation if needed */
     if (estimateOrientation) {
-      vl_size numFeaturesBefore = vl_covdet_get_num_features(covdet) ;
-      vl_size numFeaturesAfter ;
+      if (verbose) {
+        vl_size numFeaturesBefore = vl_covdet_get_num_features(covdet) ;
+        mexPrintf("vl_covdet: estimating orientations for %d features\n", numFeaturesBefore) ;
+      }
 
       vl_covdet_extract_orientations(covdet) ;
 
-      numFeaturesAfter = vl_covdet_get_num_features(covdet) ;
-      if (verbose && numFeaturesAfter > numFeaturesBefore) {
-        mexPrintf("vl_covdet: %d duplicate features were created due to ambiguous "
-                  "orientation detection (%d total)\n",
-                  numFeaturesAfter - numFeaturesBefore, numFeaturesAfter) ;
+      if (verbose) {
+        vl_size numFeaturesAfter = vl_covdet_get_num_features(covdet) ;
+        mexPrintf("vl_covdet: %d features after estimating orientations\n", numFeaturesAfter) ;
       }
+
     }
 
     /* store results back */
@@ -673,6 +615,7 @@ mexFunction(int nout, mxArray *out[],
     }
 
     if (nout >= 2) {
+      //      descriptorType = DESC_NONE;
       switch (descriptorType) {
         case VL_COVDET_DESC_NONE:
           OUT(DESCRIPTORS) = mxCreateDoubleMatrix(0,0,mxREAL);
@@ -680,8 +623,8 @@ mexFunction(int nout, mxArray *out[],
 
         case VL_COVDET_DESC_PATCH:
         {
-          vl_size numFeatures ;
-          VlCovDetFeature const * feature ;
+		  vl_size numFeatures ;
+		  VlCovDetFeature const * feature ;
           vl_index i ;
           vl_size w = 2*patchResolution + 1 ;
           float * desc ;
@@ -697,15 +640,12 @@ mexFunction(int nout, mxArray *out[],
           OUT(DESCRIPTORS) = mxCreateNumericMatrix(w*w, numFeatures, mxSINGLE_CLASS, mxREAL) ;
           desc = mxGetData(OUT(DESCRIPTORS)) ;
           for (i = 0 ; i < (signed)numFeatures ; ++i) {
-            vl_bool res = vl_covdet_extract_patch_for_frame(covdet,
-                                                            desc,
-                                                            patchResolution,
-                                                            patchRelativeExtent,
-                                                            patchRelativeSmoothing,
-                                                            feature[i].frame) ;
-            if (res != VL_ERR_OK) {
-              vlmxError(vlmxErrInconsistentData, vl_get_last_error_message()) ;
-            }
+            vl_covdet_extract_patch_for_frame(covdet,
+                                    desc,
+                                    patchResolution,
+                                    patchRelativeExtent,
+                                    patchRelativeSmoothing,
+                                    feature[i].frame) ;
             desc += w*w ;
           }
           break ;
@@ -731,15 +671,13 @@ mexFunction(int nout, mxArray *out[],
           desc = mxGetData(OUT(DESCRIPTORS)) ;
           vl_sift_set_magnif(sift, 3.0) ;
           for (i = 0 ; i < (signed)numFeatures ; ++i) {
-            vl_bool res = vl_covdet_extract_patch_for_frame(covdet,
-                                                            patch,
-                                                            patchResolution,
-                                                            patchRelativeExtent,
-                                                            patchRelativeSmoothing,
-                                                            feature[i].frame) ;
-            if (res != VL_ERR_OK) {
-              vlmxError(vlmxErrInconsistentData, vl_get_last_error_message()) ;
-            }
+            vl_covdet_extract_patch_for_frame(covdet,
+                                              patch,
+                                              patchResolution,
+                                              patchRelativeExtent,
+                                              patchRelativeSmoothing,
+                                              feature[i].frame) ;
+
             vl_imgradient_polar_f (patchXY, patchXY +1,
                                    2, 2 * patchSide,
                                    patch, patchSide, patchSide, patchSide) ;
@@ -750,8 +688,8 @@ mexFunction(int nout, mxArray *out[],
              However, if NBO is not divisible by 4, then the configuration
              of the SIFT orientations is not symmetric by rotations of pi/2.
              Hence the only option is to rotate the descriptor further by
-             an angle we need to compute the descriptor rotated by an additional pi/2
-             angle. In this manner, x coincides and y is flipped.
+             an angle we need to compute the descriptor rotaed by an additional pi/2
+             angle. In this manner, x concides and y is flipped.
              */
             vl_sift_calc_raw_descriptor (sift,
                                          patchXY,
@@ -762,6 +700,8 @@ mexFunction(int nout, mxArray *out[],
                                          patchStep,
                                          VL_PI / 2) ;
 
+            //VL_PRINTF("%g\n", (double)patchRelativeExtent / (3.0 * (4 + 1) / 2)) ;
+
             flip_descriptor (desc, tempDesc) ;
             desc += dimension ;
           }
@@ -769,7 +709,7 @@ mexFunction(int nout, mxArray *out[],
           break ;
         }
         case VL_COVDET_DESC_LIOP :
-        {          /* TODO: get parameters form input */
+        {          // TODO: get parameters form input
           vl_size numFeatures = vl_covdet_get_num_features(covdet) ;
           vl_size dimension ;
           VlCovDetFeature const * feature = vl_covdet_get_features(covdet);
@@ -791,20 +731,22 @@ mexFunction(int nout, mxArray *out[],
           }
           OUT(DESCRIPTORS) = mxCreateNumericMatrix(dimension, numFeatures, mxSINGLE_CLASS, mxREAL);
           desc = mxGetData(OUT(DESCRIPTORS)) ;
+          vl_tic();
           for(i = 0; i < (signed)numFeatures; i++){
-            vl_bool res = vl_covdet_extract_patch_for_frame(covdet,
-                                                            patch,
-                                                            patchResolution,
-                                                            patchRelativeExtent,
-                                                            patchRelativeSmoothing,
-                                                            feature[i].frame);
-            if (res != VL_ERR_OK) {
-              vlmxError(vlmxErrInconsistentData, vl_get_last_error_message()) ;
-            }
-            vl_liopdesc_process(liop, desc, patch);
-            desc += dimension;
+              vl_covdet_extract_patch_for_frame(covdet,
+                                                patch,
+                                                patchResolution,
+                                                patchRelativeExtent,
+                                                patchRelativeSmoothing,
+                                                feature[i].frame);
+
+              vl_liopdesc_process(liop, desc, patch);
+
+              desc += dimension;
+
           }
-          vl_liopdesc_delete(liop);
+          mexPrintf("time: %f\n",vl_toc());
+          mexPrintf("threshold: %f\n",liop->intensityThreshold);
           break;
         }
 

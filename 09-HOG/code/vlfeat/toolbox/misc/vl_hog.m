@@ -4,7 +4,7 @@
 %   in SINGLE storage class. HOG is an array of cells: its number
 %   of columns is approximately the number of columns of IM divided
 %   by CELLSIZE and the same for the number of rows. The third
-%   dimension spans the feature components.
+%   dimension spans the feature compoents.
 %
 %   PERM = VL_HOG('permutation') returns the left-right permutation
 %   to apply to each HOG cell to flip it.
@@ -37,9 +37,6 @@
 %
 %   Example:: computing and visualizing HOG features
 %     hog = vl_hog(im2single(im)) ; % compute HOG features
-%
-%   See also: <a href="matlab:vl_help('hog')">HOG fundamentals</a>,
-%   VL_HELP().
 
 % Author: Andrea Vedaldi
 

@@ -19,12 +19,7 @@ info: bin-info
 # --------------------------------------------------------------------
 
 BIN_CFLAGS = $(STD_CFLAGS) -I$(VLDIR)
-BIN_CFLAGS += $(if $(DISABLE_THREADS),,-pthread)
-BIN_CFLAGS += $(if $(DISABLE_OPENMP),,-fopenmp)
-
-BIN_LDFLAGS = $(STD_LDFLAGS) -L$(BINDIR) -lvl -lm
-BIN_LDFLAGS += $(if $(DISABLE_THREADS),,-lpthread)
-BIN_LDFLAGS += $(if $(DISABLE_OPENMP),,-fopenmp)
+BIN_LDFLAGS = $(STD_LDFLAGS) -L$(BINDIR) -lvl
 
 # Mac OS X Intel 32
 ifeq ($(ARCH),maci)
@@ -66,7 +61,7 @@ comm_bins +=
 no_dep_targets += bin-dir bin-clean bin-archclean bin-distclean
 no_dep_targets += bin-info
 
-bin-all: $(dll-dir) $(bin_tgt)
+bin-all: $(dll-dir) $(dll_tgt) $(bin_tgt)
 
 # BIN_LDFLAGS includes the libraries to link to and must be
 # specified after the object "$<" that uses them. If not, stricter
@@ -74,15 +69,8 @@ bin-all: $(dll-dir) $(bin_tgt)
 # will break as they will not include the dependencies. See
 # also http://wiki.debian.org/ToolChain/DSOLinking
 
-$(BINDIR)/% : $(VLDIR)/src/%.c $(dll_tgt)
-	$(call C,CC) $(BIN_CFLAGS) "$<" $(BIN_LDFLAGS) -o "$(@)"
-ifdef BIN_RELINK_OMP
-	make/macos_relink_omp.sh "$(@)"
-endif
-
-ifdef BIN_RELINK_OMP
-arch_bins += $(BINDIR)/libomp.dylib
-endif
+$(BINDIR)/% : $(VLDIR)/src/%.c
+	$(call C,CC) $(BIN_CFLAGS) "$<" $(BIN_LDFLAGS) -o "$@"
 
 $(BINDIR)/%.d : $(VLDIR)/src/%.c $(dll-dir)
 	$(call C,CC) $(BIN_CFLAGS) -M -MT  \

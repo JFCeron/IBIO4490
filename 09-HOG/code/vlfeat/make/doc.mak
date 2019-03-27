@@ -2,7 +2,6 @@
 # description: Makefile submodule to build the documentation
 # author: Andrea Vedaldi
 
-# Copyright (C) 2013-14 Andrea Vedaldi.
 # Copyright (C) 2007-12 Andrea Vedaldi and Brian Fulkerson.
 # All rights reserved.
 #
@@ -22,6 +21,7 @@ DOXYGEN    ?= doxygen
 
 PDFLATEX   ?= pdflatex
 FIG2DEV    ?= fig2dev
+INKSCAPE   ?= inkscape
 CONVERT    ?= convert
 
 PYTHON     ?= python
@@ -36,13 +36,13 @@ screen_dpi := 95
 
 doc: doc-api doc-man doc-matlab
 
-# generate $(doc-dir) target
+# generate doc-dir: target
 $(eval $(call gendir, doc, \
 	 doc \
 	 doc/build doc/build/api doc/build/man doc/build/figures \
          doc/demo doc/figures doc/matlab doc/api))
 
-# generate results-dir target
+# generate results-dir: target
 $(eval $(call gendir, results, results))
 
 # --------------------------------------------------------------------
@@ -51,19 +51,12 @@ $(eval $(call gendir, results, results))
 
 .PHONY: doc-deep
 
-doc-matlab : toolbox/doc/matlab/helptoc.xml
-doc-matlab : toolbox/doc/matlab/helpsearch-v3/segments.gen
-
 ifdef MATLAB_PATH
-ifeq ($(call gt,$(MATLAB_VER),80500),)
-doc-matlab : toolbox/doc/matlab/helpsearch-v3/segments.gen
-else
-doc-matlab : toolbox/doc/matlab/helpsearch-v2/segments.gen
-endif
+doc-matlab: doc/matlab/helpsearch/deletable
 endif
 
 # use MATLAB to create the figures for the tutorials
-doc-deep: $(doc-dir) $(results-dir) all
+doc-deep: all $(doc-dir) $(results-dir)
 	cd toolbox ; \
 	VL_DEMO_PRINT=y $(MATLAB_EXE) \
 	    -$(ARCH) -nodesktop -nosplash \
@@ -74,19 +67,12 @@ doc-deep: $(doc-dir) $(results-dir) all
 	$(MAKE) doc
 
 # make documentation searchable in MATLAB
-m_doc_lnk := toolbox/doc
+doc/matlab/helpsearch/deletable : doc/build/matlab/helpsearch/deletable $(doc-dir)
+	cp -v doc/build/matlab/helptoc.xml doc/matlab/
+	cp -rv doc/build/matlab/helpsearch doc/matlab/
 
-toolbox/doc/matlab/helptoc.xml : doc/build/matlab/helptoc.xml doc/index.html
-	ln -sf ../doc toolbox/doc
-	cp -v "$<" "$@"
-
-toolbox/doc/matlab/helpsearch-v3/segments.gen : toolbox/doc/matlab/helptoc.xml
-	$(MATLAB_EXE) -$(ARCH) -nodisplay -nosplash -r \
-	"addpath('toolbox');builddocsearchdb('toolbox/doc/matlab/');exit"
-
-toolbox/doc/matlab/helpsearch-v2/segments.gen : toolbox/doc/matlab/helptoc.xml
-	$(MATLAB_EXE) -$(ARCH) -nodisplay -nosplash -r \
-	"addpath('toolbox');builddocsearchdb('toolbox/doc/matlab/');exit"
+doc/build/matlab/helpsearch/deletable: doc/build/matlab/helptoc.xml
+	$(MATLAB_EXE) -$(ARCH) -nodisplay -r "builddocsearchdb('doc/build/matlab/') ; exit"
 
 # --------------------------------------------------------------------
 #                                                                 MDoc
@@ -185,7 +171,7 @@ doc/build/man/xman.html : $(man_tgt) $(doc-dir)
 
 # Convert the various man pages
 doc/build/man/%.html : src/% $(doc-dir)
-	@echo MAN2HTML "$(@)"
+	@$(print-command MAN2HTML, $@)
 	@( \
 	  echo '<!DOCTYPE group PUBLIC ' ; \
 	  echo '  "-//W3C//DTD XHTML 1.0 Transitional//EN"' ; \
@@ -203,18 +189,19 @@ doc/build/man/%.html : src/% $(doc-dir)
 
 doc_fig_src := $(wildcard docsrc/figures/*.fig)
 doc_svg_src := $(wildcard docsrc/figures/*.svg)
-doc_fig_tgt += \
-$(subst docsrc/,doc/,$(doc_fig_src:.fig=.png)) \
-$(subst docsrc/,doc/,$(doc_svg_src:.svg=.png))
+doc_fig_tgt += $(subst docsrc/,doc/,$(doc_fig_src:.fig=.png)) $(subst docsrc/,doc/,$(doc_svg_src:.svg=.png))
 
 .PRECIOUS: doc/build/figures/%.pdf
 .PRECIOUS: doc/build/figures/%.tex
 
 doc/figures/%.png : doc/build/figures/%.pdf
-	$(call C,CONVERT) -units PixelsPerInch -density $(screen_dpi) -resample $(screen_dpi) -trim "$<" "$@"
+	$(call C,CONVERT) -density 300 "$<" -resample $(screen_dpi) -trim  "$@"
 
-doc/figures/%.png : docsrc/figures/%.svg
-	$(call C,CONVERT) -units PixelsPerInch -density $(screen_dpi) -resample $(screen_dpi) -trim "$<" "$@"
+# Inkscape
+doc/build/figures/%-raw.pdf doc/build/figures/%-raw.tex: docsrc/figures/%.svg
+	$(call C,INKSCAPE) --export-pdf=doc/build/figures/$(*)-raw.pdf --export-latex "$<"
+	@$(MV) doc/build/figures/$(*)-raw.pdf_tex doc/build/figures/$(*)-raw.tex
+	@$(SED) -e 's/$(*)-raw/doc\/build\/figures\/$(*)-raw/g' -i.bak 'doc/build/figures/$(*)-raw.tex'
 
 # Fig
 doc/build/figures/%-raw.tex : docsrc/figures/%.fig $(doc-dir)
@@ -228,7 +215,7 @@ doc/build/figures/%.pdf doc/build/figures/%.aux doc/build/figures/%.log : \
 	$(call C,PDFLATEX) -shell-escape -interaction=batchmode -output-directory="$(dir $@)" "$<" 2>/dev/null
 
 doc/build/figures/%.tex : $(doc-dir)
-	@echo GEN "$(@)"
+	@$(print-command GEN, $@)
 	@/bin/echo '\documentclass[landscape]{article}'                 >$@
 	@/bin/echo '\usepackage[paper=a2paper,margin=0pt]{geometry}'	>>$@
 	@/bin/echo '\usepackage{graphicx,color}'			>>$@
@@ -255,7 +242,7 @@ doc/api/index.html: docsrc/doxygen.conf docsrc/vlfeat.bib VERSION \
 #                                                               Webdoc
 # --------------------------------------------------------------------
 
-webdoc_src = $(wildcard docsrc/*.xml) $(wildcard docsrc/*.html) $(wildcard docsrc/tutorials/*.html)
+webdoc_src = $(wildcard docsrc/*.xml) $(wildcard docsrc/*.html)
 
 doc: doc/index.html doc/vlfeat.css doc/pygmentize.css $(doc_fig_tgt)
 
@@ -290,7 +277,6 @@ doc/index.html: $(webdoc_src) $(doc-dir) \
 	VERSION=$(VER) $(PYTHON) docsrc/webdoc.py \
              --outdir=doc \
 	     --verbose \
-	     --indexfile=doc/index.txt \
 	     --doxytag=doc/doxygen.tag \
 	     --doxydir=api \
 	     docsrc/vlfeat-website.xml
@@ -302,7 +288,7 @@ doc/index.html: $(webdoc_src) $(doc-dir) \
 # --------------------------------------------------------------------
 
 .PHONY: doc-clean, doc-archclean, doc-distclean
-no_dep_targets += doc-clean doc-archclean doc-distclean
+no_dep_targets := doc-clean doc-archclean doc-distclean
 
 VERSION: vl/generic.h
 	echo "$(VER)" > VERSION
@@ -312,9 +298,8 @@ doc-clean:
 
 doc-archclean:
 doc-distclean:
-	rm -f docsrc/*.pyc
+	rm -f  docsrc/*.pyc
 	rm -rf doc
-	rm -rf toolbox/doc
 
 # --------------------------------------------------------------------
 #                                                       Debug Makefile

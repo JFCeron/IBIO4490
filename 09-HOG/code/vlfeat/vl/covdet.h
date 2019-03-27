@@ -6,13 +6,12 @@
  **/
 
 /*
-Copyright (C) 2013-14 Andrea Vedaldi.
-Copyright (C) 2012 Karel Lenc, Andrea Vedaldi and Michal Perdoch.
-All rights reserved.
+ Copyright (C) 2007-12 Andrea Vedaldi and Brian Fulkerson.
+ All rights reserved.
 
-This file is part of the VLFeat library and is made available under
-the terms of the BSD license (see the COPYING file).
-*/
+ This file is part of the VLFeat library and is made available under
+ the terms of the BSD license (see the COPYING file).
+ */
 
 #ifndef VL_COVDET_H
 #define VL_COVDET_H
@@ -103,14 +102,9 @@ vl_get_frame_size (VlFrameType frameType) {
 }
 
 /** @brief Get the size of a frame structure
- ** @param affineAdaptation whether the detector use affine adaptation.
- ** @param orientation whether the detector estimates the feature orientation.
- ** @return the type of extracted frame.
- **
- ** Depedning on whether the detector estimate the affine shape
- ** and orientation of a feature, different frame types
- ** are extracted. */
-
+ ** @param frameType identifier of the type of frame.
+ ** @return size of the corresponding frame structure in bytes.
+ **/
 VL_INLINE VlFrameType
 vl_get_frame_type (vl_bool affineAdaptation, vl_bool orientation)
 {
@@ -133,7 +127,7 @@ vl_get_frame_type (vl_bool affineAdaptation, vl_bool orientation)
 /*                                       Covariant Feature Detector */
 /* ---------------------------------------------------------------- */
 
-/** @brief A detected feature shape and location */
+/** @brief A detected feature */
 typedef struct _VlCovDetFeature
 {
   VlFrameOrientedEllipse frame ; /**< feature frame. */
@@ -143,14 +137,12 @@ typedef struct _VlCovDetFeature
   float laplacianScaleScore ; /**< Laplacian scale score. */
 } VlCovDetFeature ;
 
-/** @brief A detected feature orientation */
 typedef struct _VlCovDetFeatureOrientation
 {
   double angle ;
   double score ;
 } VlCovDetFeatureOrientation ;
 
-/** @brief A detected feature Laplacian scale */
 typedef struct _VlCovDetFeatureLaplacianScale
 {
   double scale ;
@@ -172,25 +164,19 @@ typedef enum _VlCovDetMethod
 /** @brief Mapping between strings and ::VlCovDetMethod values */
 VL_EXPORT VlEnumerator vlCovdetMethods [VL_COVDET_METHOD_NUM] ;
 
-#ifdef __DOXYGEN__
-/** @brief Covariant feature detector
- ** @see @ref covdet */
-struct _VlCovDet { }
-#endif
-
-/** @brief Covariant feature detector
- ** @see @ref covdet */
 typedef struct _VlCovDet VlCovDet ;
 
 /** @name Create and destroy
- ** @{ */
+ ** @{
+ **/
 VL_EXPORT VlCovDet * vl_covdet_new (VlCovDetMethod method) ;
 VL_EXPORT void vl_covdet_delete (VlCovDet * self) ;
 VL_EXPORT void vl_covdet_reset (VlCovDet * self) ;
 /** @} */
 
 /** @name Process data
- ** @{ */
+ ** @{
+ **/
 VL_EXPORT int vl_covdet_put_image (VlCovDet * self,
                                     float const * image,
                                     vl_size width, vl_size height) ;
@@ -224,20 +210,18 @@ vl_covdet_extract_patch_for_frame (VlCovDet * self, float * patch,
 
 VL_EXPORT void
 vl_covdet_drop_features_outside (VlCovDet * self, double margin) ;
+
 /** @} */
 
 /** @name Retrieve data and parameters
- ** @{ */
+ ** @{
+ **/
 VL_EXPORT vl_size vl_covdet_get_num_features (VlCovDet const * self) ;
 VL_EXPORT void * vl_covdet_get_features (VlCovDet * self) ;
 VL_EXPORT vl_index vl_covdet_get_first_octave (VlCovDet const * self) ;
-VL_EXPORT vl_size vl_covdet_get_num_octaves (VlCovDet const * self) ;
-VL_EXPORT double vl_covdet_get_base_scale (VlCovDet const * self) ;
 VL_EXPORT vl_size vl_covdet_get_octave_resolution (VlCovDet const * self) ;
 VL_EXPORT double vl_covdet_get_peak_threshold (VlCovDet const * self) ;
 VL_EXPORT double vl_covdet_get_edge_threshold (VlCovDet const * self) ;
-VL_EXPORT double vl_covdeg_get_laplacian_peak_threshold (VlCovDet const * self) ;
-VL_EXPORT vl_size vl_covdet_get_max_num_orientations (VlCovDet const * self) ;
 VL_EXPORT vl_bool vl_covdet_get_transposed (VlCovDet const * self) ;
 VL_EXPORT VlScaleSpace *  vl_covdet_get_gss (VlCovDet const * self) ;
 VL_EXPORT VlScaleSpace *  vl_covdet_get_css (VlCovDet const * self) ;
@@ -245,23 +229,19 @@ VL_EXPORT vl_bool vl_covdet_get_aa_accurate_smoothing (VlCovDet const * self) ;
 VL_EXPORT vl_size const * vl_covdet_get_laplacian_scales_statistics (VlCovDet const * self, vl_size * numScales) ;
 VL_EXPORT double vl_covdet_get_non_extrema_suppression_threshold (VlCovDet const * self) ;
 VL_EXPORT vl_size vl_covdet_get_num_non_extrema_suppressed (VlCovDet const * self) ;
-VL_EXPORT vl_bool vl_covdet_get_allow_padded_warping (VlCovDet const * self) ;
+
 /** @} */
 
 /** @name Set parameters
- ** @{ */
+ ** @{
+ **/
 VL_EXPORT void vl_covdet_set_first_octave (VlCovDet * self, vl_index o) ;
-VL_EXPORT void vl_covdet_set_num_octaves (VlCovDet * self, vl_size o) ;
-VL_EXPORT void vl_covdet_set_base_scale (VlCovDet * self, double s) ;
 VL_EXPORT void vl_covdet_set_octave_resolution (VlCovDet * self, vl_size r) ;
 VL_EXPORT void vl_covdet_set_peak_threshold (VlCovDet * self, double peakThreshold) ;
 VL_EXPORT void vl_covdet_set_edge_threshold (VlCovDet * self, double edgeThreshold) ;
-VL_EXPORT void vl_covdet_set_laplacian_peak_threshold (VlCovDet * self, double peakThreshold) ;
-VL_EXPORT void vl_covdet_set_max_num_orientations (VlCovDet * self, vl_size m) ;
 VL_EXPORT void vl_covdet_set_transposed (VlCovDet * self, vl_bool t) ;
 VL_EXPORT void vl_covdet_set_aa_accurate_smoothing (VlCovDet * self, vl_bool x) ;
 VL_EXPORT void vl_covdet_set_non_extrema_suppression_threshold (VlCovDet * self, double x) ;
-VL_EXPORT void vl_covdet_set_allow_padded_warping (VlCovDet * self, vl_bool x) ;
 /** @} */
 
 /* VL_COVDET_H */

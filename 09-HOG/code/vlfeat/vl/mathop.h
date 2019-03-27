@@ -1,5 +1,5 @@
 /** @file mathop.h
- ** @brief Math operations (@ref mathop)
+ ** @brief Math operations
  ** @author Andrea Vedaldi, David Novotny
  **/
 
@@ -309,7 +309,6 @@ vl_sqrt_f (float x)
 #endif
 }
 
-
 /** @brief Check whether a floating point value is NaN
  ** @param x argument.
  ** @return true if @a x is NaN.
@@ -536,9 +535,45 @@ vl_fast_resqrt_d (double x)
  ** @param x argument.
  ** @return approximation of @c sqrt(x).
  **
- ** The function uses ::vl_fast_resqrt_f
+ ** The function computes a cheap approximation of @c sqrt(x).
+ **
+ ** @par Floating-point algorithm
+ **
+ ** For the floating point cases, the function uses ::vl_fast_resqrt_f
  ** (or ::vl_fast_resqrt_d) to compute <code>x *
  ** vl_fast_resqrt_f(x)</code>.
+ **
+ ** @par Integer algorithm
+ **
+ ** We seek for the largest integer @e y such that @f$ y^2 \leq x @f$.
+ ** Write @f$ y = w + b_k 2^k + z @f$ where the binary expansion of the
+ ** various variable is
+ **
+ ** @f[
+ **  x = \sum_{i=0}^{n-1} 2^i a_i, \qquad
+ **  w = \sum_{i=k+1}^{m-1} 2^i b_i, \qquad
+ **  z = \sum_{i=0}^{k-1} 2^i b_i.
+ ** @f]
+ **
+ ** Assume @e w known. Expanding the square and using the fact that
+ ** @f$ b_k^2=b_k @f$, we obtain the following constraint for @f$ b_k
+ ** @f$ and @e z:
+ **
+ ** @f[
+ **    x - w^2 \geq 2^k ( 2 w + 2^k ) b_k + z (z + 2wz + 2^{k+1}z b_k)
+ ** @f]
+ **
+ ** A necessary condition for @f$ b_k = 1 @f$ is that this equation is
+ ** satisfied for @f$ z = 0 @f$ (as the second term is always
+ ** non-negative). In fact, this condition is also sufficient, since
+ ** we are looking for the @e largest solution @e y.
+ **
+ ** This yields the following iterative algorithm. First, note that if
+ ** @e x is stored in @e n bits, where @e n is even, then the integer
+ ** square root does not require more than @f$ m = n / 2 @f$ bit to be
+ ** stored.  Thus initially, @f$ w = 0 @f$ and @f$ k = m - 1 = n/2 - 1
+ ** @f$. Then, at each iteration the equation is tested, determining
+ ** @f$ b_{m-1}, b_{m-2}, ... @f$ in this order.
  **/
 
 VL_INLINE float
@@ -548,7 +583,7 @@ vl_fast_sqrt_f (float x)
 }
 
 /** @brief Fast @c sqrt approximation
- ** @copydoc vl_fast_sqrt_f
+ ** @sa vl_fast_sqrt_f
  **/
 
 VL_INLINE double
@@ -557,45 +592,44 @@ vl_fast_sqrt_d (float x)
   return (x < 1e-8) ? 0 : x * vl_fast_resqrt_d (x) ;
 }
 
-/** @brief Fast integer @c sqrt approximation
- ** @param x non-negative integer.
- ** @return largest integer $y$ such that $y^2 \leq x$.
- ** @sa @ref mathop-sqrti "Algorithm"
- **/
-VL_INLINE vl_uint64 vl_fast_sqrt_ui64 (vl_uint64 x) ;
-
 /** @brief Fast @c sqrt approximation
- ** @copydoc vl_fast_sqrt_ui64 */
+ ** @sa vl_fast_sqrt_f
+ **/
+
 VL_INLINE vl_uint32 vl_fast_sqrt_ui32 (vl_uint32 x) ;
 
 /** @brief Fast @c sqrt approximation
- ** @copydoc vl_fast_sqrt_ui64 */
+ ** @sa vl_fast_sqrt_f
+ **/
+
 VL_INLINE vl_uint16 vl_fast_sqrt_ui16 (vl_uint16 x) ;
 
 /** @brief Fast @c sqrt approximation
- ** @copydoc vl_fast_sqrt_ui64 */
+ ** @sa vl_fast_sqrt_f
+ **/
+
 VL_INLINE vl_uint8  vl_fast_sqrt_ui8  (vl_uint8  x) ;
 
 #define VL_FAST_SQRT_UI(T,SFX)                                       \
-VL_INLINE T                                                          \
-vl_fast_sqrt_ ## SFX (T x)                                           \
+  VL_INLINE T                                                        \
+  vl_fast_sqrt_ ## SFX (T x)                                         \
 {                                                                    \
-  T y = 0 ;                                                          \
-  T tmp = 0 ;                                                        \
-  int twice_k ;                                                      \
-  for (twice_k = 8 * sizeof(T) - 2 ;                                 \
-       twice_k >= 0 ; twice_k -= 2) {                                \
-    y <<= 1 ; /* y = 2 * y */                                        \
-    tmp = (2*y + 1) << twice_k ;                                     \
-    if (x >= tmp) {                                                  \
-      x -= tmp ;                                                     \
-      y += 1 ;                                                       \
+    T y = 0 ; /* w / 2^k */                                          \
+    T tmp = 0 ;                                                      \
+    int twok ;                                                       \
+                                                                     \
+    for (twok = 8 * sizeof(T) - 2 ;                                  \
+         twok >= 0 ; twok -= 2) {                                    \
+      y <<= 1 ; /* y = 2 * y */                                      \
+      tmp = (2*y + 1) << twok ;                                      \
+      if (x >= tmp) {                                                \
+        x -= tmp ;                                                   \
+        y += 1 ;                                                     \
+      }                                                              \
     }                                                                \
-  }                                                                  \
-  return y ;                                                         \
-}
+    return y ;                                                       \
+  }
 
-VL_FAST_SQRT_UI(vl_uint64,ui64)
 VL_FAST_SQRT_UI(vl_uint32,ui32)
 VL_FAST_SQRT_UI(vl_uint16,ui16)
 VL_FAST_SQRT_UI(vl_uint8,ui8)

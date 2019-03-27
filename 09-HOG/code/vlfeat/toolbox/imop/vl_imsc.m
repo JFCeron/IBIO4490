@@ -17,4 +17,3 @@ end
 
 J = I - min(I(:)) ;
 J = J / max(J(:)) ;
-J = max(min(J, 1), 0) ;

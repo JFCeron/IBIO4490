@@ -105,7 +105,7 @@ ANN         | ::VlKMeansANN    | @ref kmeans-ann   | A speedup using approximate
 See the relative sections for further details. These algorithm are
 iterative, and stop when either a **maximum number of iterations**
 (::vl_kmeans_set_max_num_iterations) is reached, or when the energy
-changes sufficiently slowly in one iteration (::vl_kmeans_set_min_energy_variation).
+changes sufficiently slowly in one iteration (::vl_kmeans).
 
 
 All the three algorithms support multithreaded computations. The number
@@ -413,7 +413,6 @@ vl_kmeans_new (vl_type dataType,
   self->dataType = dataType ;
   self->verbosity = 0 ;
   self->maxNumIterations = 100 ;
-  self->minEnergyVariation = 1e-4 ;
   self->numRepetitions = 1 ;
   self->centers = NULL ;
   self->centerDistances = NULL ;
@@ -662,6 +661,10 @@ VL_XCAT(_vl_kmeans_quantize_, SFX)
 {
   vl_index i ;
 
+#ifdef _OPENMP
+  vl_size numThreads = vl_get_max_threads() ;
+#endif
+
 #if (FLT == VL_TYPE_FLOAT)
   VlFloatVectorComparisonFunction distFn = vl_get_vector_comparison_function_f(self->distance) ;
 #else
@@ -671,7 +674,7 @@ VL_XCAT(_vl_kmeans_quantize_, SFX)
 #ifdef _OPENMP
 #pragma omp parallel default(none) \
             shared(self, distances, assignments, numData, distFn, data) \
-            num_threads(vl_get_max_threads())
+            num_threads(numThreads)
 #endif
   {
     /* vl_malloc cannot be used here if mapped to MATLAB malloc */
@@ -833,7 +836,6 @@ VL_XCAT(_vl_kmeans_refine_centers_lloyd_, SFX)
 {
   vl_size c, d, x, iteration ;
   double previousEnergy = VL_INFINITY_D ;
-  double initialEnergy = VL_INFINITY_D ;
   double energy ;
   TYPE * distances = vl_malloc (sizeof(TYPE) * numData) ;
 
@@ -880,19 +882,7 @@ VL_XCAT(_vl_kmeans_refine_centers_lloyd_, SFX)
       }
       break ;
     }
-    
-    if (iteration == 0) {
-      initialEnergy = energy ;
-    } else {
-      double eps = (previousEnergy - energy) / (initialEnergy - energy) ;
-      if (eps < self->minEnergyVariation) {
-        if (self->verbosity) {
-          VL_PRINTF("kmeans: ANN terminating because the energy relative variation was less than %f\n", self->minEnergyVariation) ;
-        }
-        break ;
-      }
-    }
-    
+
     /* begin next iteration */
     previousEnergy = energy ;
 
@@ -1007,7 +997,6 @@ VL_XCAT(_vl_kmeans_refine_centers_ann_, SFX)
  vl_size numData)
 {
   vl_size c, d, x, iteration ;
-  double initialEnergy = VL_INFINITY_D ;
   double previousEnergy = VL_INFINITY_D ;
   double energy ;
 
@@ -1032,6 +1021,8 @@ VL_XCAT(_vl_kmeans_refine_centers_ann_, SFX)
        1 ;
        ++ iteration) {
 
+	double eps;
+
     /* assign data to cluters */
     VL_XCAT(_vl_kmeans_quantize_ann_, SFX)(self, assignments, distances, data, numData, iteration > 0) ;
 
@@ -1050,23 +1041,13 @@ VL_XCAT(_vl_kmeans_refine_centers_ann_, SFX)
       }
       break ;
     }
-    if (energy == previousEnergy) {
+
+    eps = (previousEnergy - energy)/previousEnergy;
+    if (energy == previousEnergy || eps < 0.00001) {
       if (self->verbosity) {
         VL_PRINTF("kmeans: ANN terminating because the algorithm fully converged\n") ;
       }
       break ;
-    }
-    
-    if (iteration == 0) {
-      initialEnergy = energy ;
-    } else {
-      double eps = (previousEnergy - energy) / (initialEnergy - energy) ;
-      if (eps < self->minEnergyVariation) {
-        if (self->verbosity) {
-          VL_PRINTF("kmeans: ANN terminating because the energy relative variation was less than %f\n", self->minEnergyVariation) ;
-        }
-        break ;
-      }
     }
 
     /* begin next iteration */

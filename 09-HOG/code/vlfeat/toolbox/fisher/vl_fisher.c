@@ -53,7 +53,6 @@ mexFunction (int nout VL_UNUSED, mxArray * out[], int nin, const mxArray * in[])
   void * means = NULL;
   void * priors = NULL;
   void * data = NULL ;
-  vl_size numTerms ;
 
   int verbosity = 0 ;
 
@@ -150,16 +149,10 @@ mexFunction (int nout VL_UNUSED, mxArray * out[], int nin, const mxArray * in[])
 
   OUT(ENC) = mxCreateNumericMatrix (dimension * numClusters * 2, 1, classID, mxREAL) ;
 
-  numTerms = vl_fisher_encode (mxGetData(OUT(ENC)), dataType,
-                               means, dimension, numClusters,
-                               covariances,
-                               priors,
-                               data, numData,
-                               flags) ;
-
-  if (verbosity) {
-    mexPrintf("vl_fisher: sparsity of assignments: %.2f%% (%d non-negligible assignments)\n",
-              100.0 * (1.0 - (double)numTerms/((double)numData*(double)numClusters+1e-12)),
-              numTerms) ;
-  }
+  vl_fisher_encode (mxGetData(OUT(ENC)), dataType,
+                    means, dimension, numClusters,
+                    covariances,
+                    priors,
+                    data, numData,
+                    flags) ;
 }

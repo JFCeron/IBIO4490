@@ -13,7 +13,7 @@
   <include src="doc.html"/>
 
   <dir name="matlab">
-   <page id="matlab" name="matlab" title="MATLAB API">
+   <page id="matlab" name="matlab" title="Matlab API">
     <include src="doc/build/matlab/mdoc.html"/>
     <include src="doc/build/matlab/mdoc.xml"/>
    </page>
@@ -28,7 +28,6 @@
       <pagescript type="text/javascript" src="$relpath$dynsections.js"/>
       <!-- <pagestyle href="%pathto:root;api/tabs.css"/> -->
       <pagestyle href="doxygen.css"/>
-      <pagestyle href="tabs.css"/>
       <div class="doxygen">
         <!-- Doc Here -->
       </div>

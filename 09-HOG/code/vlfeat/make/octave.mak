@@ -37,8 +37,12 @@ info: octave-mex-info
 
 OCTAVE_MEX_SUFFIX := mex
 OCTAVE_MEX_BINDIR := toolbox/mex/octave/$(MEX_SUFFIX)
-OCTAVE_MEX_CFLAGS = $(LINK_DLL_CFLAGS) -Itoolbox
-OCTAVE_MEX_LDFLAGS = $(LINK_DLL_LDFLAGS) -lm
+OCTAVE_MEX_FLAGS = -L$(BINDIR) -lvl
+OCTAVE_MEX_CFLAGS = -I$(VLDIR)/toolbox
+OCTAVE_MEX_CFLAGS += $(if $(DEBUG), -g, -O)
+OCTAVE_MEX_CFLAGS += $(if $(PROFILE), -O -g,)
+OCTAVE_MEX_CFLAGS += $(STD_CFLAGS)
+OCTAVE_MEX_LDFLAGS =
 
 # Mac OS X on Intel 32 bit processor
 ifeq ($(ARCH),maci)
@@ -87,22 +91,20 @@ octave-mex-all: $(octave_mex_tgt) matlab-noprefix
 $(eval $(call gendir, octave-mex, $(OCTAVE_MEX_BINDIR)))
 
 $(OCTAVE_MEX_BINDIR)/%.d : %.c $(octave-mex-dir)
-	$(call C,MKOCTFILE) \
-	    $(OCTAVE_MEX_CFLAGS) -M "$(<)"
+	$(call C,MKOCTFILE) $(OCTAVE_MEX_FLAGS) -M "$(<)"
 	@mv "$(<:.c=.d)" $(OCTAVE_MEX_BINDIR)
 
 $(octave_mex_dll) : $(dll_tgt)
 	cp -v "$(<)" "$(@)"
 
 $(OCTAVE_MEX_BINDIR)/%.$(OCTAVE_MEX_SUFFIX) %.o : %.c $(octave-mex-dir) $(octave_mex_dll)
-	CFLAGS="$(STD_CFLAGS)" \
-	LDFLAGS="$(STD_LDFLAGS)" \
+	CFLAGS="$(OCTAVE_MEX_CFLAGS)" \
+	CXXFLAGS="$(OCTAVE_MEX_CXXFLAGS)" \
+	LDFLAGS="$(OCTAVE_MEX_LDFLAGS)" \
 	 $(MKOCTFILE) \
-	    --mex -v \
-	    --output "$(@)" \
-	    $(OCTAVE_MEX_CFLAGS) "$(<)" \
-	    $(OCTAVE_MEX_LDFLAGS)
-	@rm -f "$(<:.c=.o)"
+	       --mex $(OCTAVE_MEX_FLAGS) \
+	       "$(<)" --output "$(@)" -v
+	@rm -f $(<:.c=.o)
 
 octave-mex-info:
 	$(call echo-title,Octave support)
@@ -115,8 +117,9 @@ octave-mex-info:
 	$(call echo-var,OCTAVE)
 	$(call echo-var,MKOCTFILE)
 	$(call echo-var,OCTAVE_MEX_BINDIR)
+	$(call echo-var,OCTAVE_MEX_FLAGS)
 	$(call echo-var,OCTAVE_MEX_CFLAGS)
-	$(call echo-var,OCTAVE_MEX_LDFLAGS)
+	$(call echo-var,OCTAVE_MEX_LDLAGS)
 	@echo
 
 octave-mex-clean:

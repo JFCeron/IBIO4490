@@ -9,7 +9,7 @@ function vl_printsize(varargin)
 %   VL_PRINTSIZE(FIG,R) operates on the specified figure FIG. The
 %   function accepts the following optional arguments:
 %
-%   AspectRatio:: []
+%   Aspect:: []
 %     Change the figure aspect ratio (width/height) to the specified
 %     value.
 %
@@ -91,9 +91,7 @@ if ~ismember(opts.reference, {'horizontal', 'vertical'})
 end
 
 % set the paper size to the reference type
-if ~isempty(opts.paperType)
-    set(fig, 'PaperType', opts.paperType) ;
-end
+set(fig, 'PaperType', opts.paperType) ;
 paperSize = get(fig, 'PaperSize') ;
 
 % get the current figure position to compute the current aspect ratio
@@ -107,11 +105,11 @@ end
 % resize the figure
 switch opts.reference
   case 'horizontal'
-    s = paperSize(1) * sizeRatio ;
+    s = paperSize(1) / position(3) * sizeRatio ;
   case 'vertical'
-    s = paperSize(2) * sizeRatio * opts.aspectRatio ;
+    s = paperSize(2) / position(4) * sizeRatio ;
 end
-position(3:4) =  s * [1 1/opts.aspectRatio] ;
+position(3:4) = position(3) * s * [1 1/opts.aspectRatio] ;
 
 % add margin
 switch opts.reference
@@ -123,8 +121,6 @@ switch opts.reference
     position(2) = position(4) * opts.margin ;
 end
 
-set(fig, ...
-  'PaperPosition', position, ...
-  'PaperSize', 2 * position(1:2) + position(3:4)) ;
-
+set(fig, 'PaperPosition', position, ...
+         'PaperSize', 2 * position(1:2) + position(3:4)) ;
 end

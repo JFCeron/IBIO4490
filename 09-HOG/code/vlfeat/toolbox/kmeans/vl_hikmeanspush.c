@@ -6,7 +6,6 @@
  **/
 
 /*
-Copyright (C) 2014 Andrea Vedaldi.
 Copyright (C) 2007-12 Andrea Vedaldi and Brian Fulkerson.
 All rights reserved.
 
@@ -49,37 +48,34 @@ xcreate (VlHIKMTree *tree, mxArray const *mnode, int i)
 {
   mxArray const *mcenters, *msub ;
   VlHIKMNode *node ;
-  mwSize M ;
-  mwSize node_K ;
+  vl_size M, node_K ;
   vl_uindex k ;
 
   /* sanity checks */
   mcenters = mxGetField(mnode, i, "centers") ;
   msub     = mxGetField(mnode, i, "sub") ;
 
-  if (!mcenters ||
+  if (!mcenters                                 ||
       mxGetClassID (mcenters) != mxINT32_CLASS  ||
-      !vlmxIsMatrix (mcenters, -1, -1)) {
-    mexErrMsgTxt("A NODE.CENTERS is not a INT32 matrix.") ;
+      !vlmxIsMatrix (mcenters, -1, -1)             ) {
+    mexErrMsgTxt("NODE.CENTERS must be a INT32 matrix.") ;
   }
 
-  M = mxGetM (mcenters) ;
+  M      = mxGetM (mcenters) ;
   node_K = mxGetN (mcenters) ;
 
-  if (M == 0) {
-    mexErrMsgTxt("A NODE.CENTERS has zero rows.") ;
-  }
-  if ((vl_size)node_K > tree->K) {
-    mexErrMsgTxt("A NODE.CENTERS has more columns than overall clusters TREE.K.") ;
-  }
-  if (tree->M == 0) {
-    tree->M = M ;
-  } else if (M != tree->M) {
-    mexErrMsgTxt("A NODE.CENTERS field has inconsistent dimensionality.") ;
+  if (node_K > (vl_size)tree->K) {
+    mexErrMsgTxt("A node has more clusters than TREE.K.") ;
   }
 
-  node = mxMalloc (sizeof(VlHIKMNode)) ;
-  node->filter = vl_ikm_new (tree->method) ;
+  if (tree->M < 0) {
+    tree->M = M ;
+  } else if (M != (vl_size)tree->M) {
+    mexErrMsgTxt("A node CENTERS field has inconsistent dimensionality.") ;
+  }
+
+  node           = mxMalloc (sizeof(VlHIKMNode)) ;
+  node->filter   = vl_ikm_new (tree->method) ;
   node->children = 0 ;
 
   vl_ikm_init (node->filter, mxGetData(mcenters), M, node_K) ;
@@ -89,15 +85,15 @@ xcreate (VlHIKMTree *tree, mxArray const *mnode, int i)
 
     /* sanity checks */
     if (mxGetClassID (msub) != mxSTRUCT_CLASS) {
-      mexErrMsgTxt("A NODE.SUB is not a MATLAB structure array.") ;
+      mexErrMsgTxt("NODE.SUB must be a MATLAB structure array.") ;
     }
     if (mxGetNumberOfElements (msub) != node_K) {
-      mexErrMsgTxt("A NODE.SUB does not correspond to NODE.CENTERS.") ;
+      mexErrMsgTxt("NODE.SUB size must correspond to NODE.CENTERS.") ;
     }
 
-    node->children = mxMalloc (sizeof(VlHIKMNode *) * node_K) ;
+    node-> children = mxMalloc (sizeof(VlHIKMNode *) * node_K) ;
     for(k = 0 ; k < node_K ; ++ k) {
-      node->children[k] = xcreate (tree, msub, k) ;
+      node-> children [k] = xcreate (tree, msub, k) ;
     }
   }
   return node ;
@@ -112,10 +108,8 @@ static VlHIKMTree*
 matlab_to_hikm (mxArray const *mtree, int method_type)
 {
   VlHIKMTree *tree ;
-  mxArray *mK ;
-  mxArray *mdepth ;
-  vl_index K = 0 ;
-  vl_index depth = 0 ;
+  mxArray *mK, *mdepth ;
+  int K = 0, depth = 0;
 
   VL_USE_MATLAB_ENV ;
 
@@ -123,12 +117,12 @@ matlab_to_hikm (mxArray const *mtree, int method_type)
     mexErrMsgTxt("TREE must be a MATLAB structure.") ;
   }
 
-  mK = mxGetField(mtree, 0, "K") ;
-  mdepth = mxGetField(mtree, 0, "depth") ;
+  mK       = mxGetField(mtree, 0, "K") ;
+  mdepth   = mxGetField(mtree, 0, "depth") ;
 
-  if (!mK ||
-      !vlmxIsPlainScalar(mK) ||
-      (K = (int) *mxGetPr(mK)) < 1) {
+  if (!mK                        ||
+      !vlmxIsPlainScalar (mK)        ||
+      (K = (int) *mxGetPr (mK)) < 1) {
     mexErrMsgTxt("TREE.K must be a DOUBLE not smaller than one.") ;
   }
 
@@ -138,30 +132,29 @@ matlab_to_hikm (mxArray const *mtree, int method_type)
     mexErrMsgTxt("TREE.DEPTH must be a DOUBLE not smaller than one.") ;
   }
 
-  tree = mxMalloc (sizeof(VlHIKMTree)) ;
-  tree->depth = (vl_size)depth ;
-  tree->K = (vl_size)K ;
-  tree->M = 0 ; /* to be initialized later */
-  tree->method = method_type ;
-  tree->root = xcreate (tree, mtree, 0) ;
+  tree         = mxMalloc (sizeof(VlHIKMTree)) ;
+  tree-> depth = depth ;
+  tree-> K     = K ;
+  tree-> M     = -1 ; /* to be initialized later */
+  tree-> method= method_type ;
+  tree-> root  = xcreate (tree, mtree, 0) ;
   return tree ;
 }
 
 /* ---------------------------------------------------------------- */
 /** @brief MEX driver entry point
  **/
-void mexFunction (int nout, mxArray * out[],
-                  int nin, const mxArray * in[])
+void mexFunction (int nout, mxArray * out[], int nin, const mxArray * in[])
 {
   enum {IN_TREE = 0, IN_DATA, IN_END} ;
   enum {OUT_ASGN = 0} ;
   vl_uint8 const *data;
 
-  int opt ;
-  int next = IN_END ;
+  int             opt ;
+  int             next = IN_END ;
   mxArray const  *optarg ;
 
-  mwSize N = 0 ;
+  int N = 0 ;
   int method_type = VL_IKM_LLOYD ;
   int verb = 0 ;
 
@@ -177,7 +170,7 @@ void mexFunction (int nout, mxArray * out[],
     mexErrMsgTxt ("DATA must be of class UINT8");
   }
 
-  N = mxGetN(in[IN_DATA]) ;
+  N = mxGetN (in[IN_DATA]);   /* n of elements */
   data = (vl_uint8 *) mxGetPr (in[IN_DATA]);
 
   while ((opt = vlmxNextOption (in, nin, options, &next, &optarg)) >= 0) {
@@ -201,8 +194,9 @@ void mexFunction (int nout, mxArray * out[],
       } else if (strcmp("elkan", buf) == 0) {
         method_type = VL_IKM_ELKAN ;
       } else {
-        mexErrMsgTxt("Unknown 'Method' type.") ;
+        mexErrMsgTxt("Unknown cost type.") ;
       }
+
       break ;
 
     default :
@@ -216,15 +210,15 @@ void mexFunction (int nout, mxArray * out[],
 
   {
     VlHIKMTree *tree ;
-    vl_uint32 *ids  ;
-    vl_uindex j;
-    vl_size depth ;
+    vl_uint  *ids  ;
+    int j;
+    int depth ;
 
-    tree = matlab_to_hikm (in[IN_TREE], method_type) ;
+    tree  = matlab_to_hikm (in[IN_TREE], method_type) ;
     depth = vl_hikm_get_depth (tree) ;
 
     if (verb) {
-      mexPrintf("vl_hikmeanspush: ndims: %d K: %d depth: %d\n",
+      mexPrintf("hikmeanspush: ndims: %d K: %d depth: %d\n",
                 vl_hikm_get_ndims (tree),
                 vl_hikm_get_K (tree),
                 depth) ;
@@ -233,9 +227,9 @@ void mexFunction (int nout, mxArray * out[],
     out[OUT_ASGN] = mxCreateNumericMatrix (depth, N, mxUINT32_CLASS, mxREAL) ;
     ids = mxGetData (out[OUT_ASGN]) ;
 
-    vl_hikm_push (tree, ids, data, N) ;
+    vl_hikm_push   (tree, ids, data, N) ;
     vl_hikm_delete (tree) ;
 
-    for (j = 0 ; j < N * depth ; j++) ids[j] ++ ;
+    for (j = 0 ; j < N*depth ; j++) ids [j] ++ ;
   }
 }

@@ -21,7 +21,6 @@ GIT ?= git
 RSYNC ?= rsync
 VER ?= $(shell cat vl/generic.h | sed -n \
     's/.*VL_VERSION_STRING.*\"\([0-9.]*\)\".*/\1/p')
-TMPDIR ?= /tmp
 
 NAME := vlfeat
 DIST := $(NAME)-$(VER)
@@ -33,7 +32,7 @@ HOST := vlfeat-admin:vlfeat.org/sandbox
 # --------------------------------------------------------------------
 
 .PHONY: dist-src, dist-src-clean, dist-src-info
-no_dep_targets += dist-src dist-src-clean dist-src-info
+no_dep_targets += dist-src, dist-src-clean, dist-src-info
 
 dist-src:
 	COPYFILE_DISABLE=1 \
@@ -118,7 +117,7 @@ dist-bin-commit-common: dist-bin-release
 	@echo Adding products to $(branch)
 	cd "$(tmp-dir)" ; $(GIT) add -f $(m_lnk)
 	cd "$(tmp-dir)" ; $(GIT) add -f $$(find doc \
-	-name '*.html' -or -name '*.jpg' -or -name '*.png' -or -name '*.css') $(m_doc_lnk)
+	-name '*.html' -or -name '*.jpg' -or -name '*.png' -or -name '*.css')
 	cd "$(tmp-dir)" ; \
 	if test -z "$$($(GIT) diff --cached)" ; \
 	then \
@@ -149,7 +148,7 @@ dist-bin-merge:
 	cd "$(tmp-dir)" ; \
 	MERGE_BRANCHES=; \
 	FETCH_BRANCHES=; \
-	for ALT_ARCH in common maci64 glnxa64 win64 ; \
+	for ALT_ARCH in common maci maci64 glnx86 glnxa64 win32 win64 ; \
 	do \
 	  MERGE_BRANCH=v$(VER)-$$ALT_ARCH ; \
 	  MERGE_BRANCHES="$$MERGE_BRANCHES bin/$$MERGE_BRANCH" ; \
@@ -193,30 +192,31 @@ dist-bin-info:
 #                                             Post packages on the web
 # --------------------------------------------------------------------
 
-.PHONY: post, post-doc, post-doc-from-dist
+.PHONY: post, post-doc
 
 post:
 	$(RSYNC)                                                     \
 	    -aP $(DIST).tar.gz $(BINDIST).tar.gz                     \
 	    $(HOST)/download
 
-rsync-doc = \
+post-doc:
+	tar xzvf $(BINDIST).tar.gz -C $(TMPDIR)/ $(NAME)-$(VER)/doc/
 	$(RSYNC)                                                     \
 	      --recursive                                            \
 	      --perms                                                \
 	      --group=lab                                            \
 	      --chmod=Dg+s,g+w,o-w                                   \
-	      --exclude=build                                        \
+	      --exclude=*.eps                                        \
 	      --exclude=download                                     \
+	      --exclude=cvpr10wiki                                   \
+	      --exclude=benchmarks                                   \
+	      --exclude=man-src                                      \
+	      --exclude=mdoc.build                                   \
+	      --exclude=.htaccess                                    \
+	      --exclude=favicon.ico                                  \
 	      --delete                                               \
 	      --progress                                             \
-
-post-doc:
-	$(rsync-doc) doc/ $(HOST)
-
-post-doc-from-dist: dist-bin
-	tar xzvf $(BINDIST).tar.gz -C $(TMPDIR)/ $(NAME)-$(VER)/doc/
-	$(rsync-doc) $(TMPDIR)/$(NAME)-$(VER)/doc/ $(HOST)
+	      $(TMPDIR)/$(NAME)-$(VER)/doc/ $(HOST)
 
 # Local variables:
 # mode: Makefile
