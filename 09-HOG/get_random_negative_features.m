@@ -34,30 +34,68 @@ function features_neg = get_random_negative_features(non_face_scn_path, feature_
 
 image_files = dir( fullfile( non_face_scn_path, '*.jpg' ));
 num_images = length(image_files);
-features_neg = zeros(num_samples, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
 
 % how many examples could we draw from each image with our method?
-examplesXimage = zeros(num_images);
+samplesXimage = zeros(num_images,1);
+rescalesXimage = zeros(num_images,1);
 for i = 1:num_images
 	img_info = imfinfo(strcat(non_face_scn_path,'/',image_files(i).name));
 	width = img_info.Width;
 	height = img_info.Height;
 	min_dim = min(width,height);
 	% how many times can I rescale this image at a factor of 2 before going below
-	% the template size?
-	n = floor(log2(min_dim/feature_params.template_size));
-	for j = 0:n
-		examplesXimage(i) = examplesXimage(i)+4^j
+	% the template size in at least one dimension?
+	rescalesXimage(i) = floor(log2(min_dim/feature_params.template_size));
+	for j = 0:rescalesXimage(i)
+		samplesXimage(i) = samplesXimage(i)+4^j;
 	end
 end
+max_samples = sum(samplesXimage);
 
+% if we want less than the maximum
+if (num_samples < max_samples)
+	% decrease the number of samples per image. At least 1
+	samplesXimage = floor((num_samples/max_samples)*samplesXimage);
+	samplesXimage = max(samplesXimage,1);
+end
+% now make that number of negative samples
+features_neg = zeros(sum(samplesXimage), (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+added = 0;
 for i = 1:num_images
 	img = imread(strcat(non_face_scn_path,'/',image_files(i).name));
 	gray = rgb2gray(img);
-
-	% first the image in 36x36
-
-
-	hog = vl_hog(single(img), feature_params.hog_cell_size);
-	features_pos(i,:) = reshape(hog,1,(feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+	% draw the requested number of samples from the image
+	added_here = 0;
+	
+	% first a template-sized version of it
+	first = imresize(gray, [feature_params.template_size,feature_params.template_size]);
+	hog = vl_hog(single(first), feature_params.hog_cell_size);
+	features_neg(added+1,:) = reshape(hog,1,(feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+	added = added + 1;
+	added_here = added_here + 1;
+	
+	% now some scaled versions. Biggest is level 0. Skip the smallest
+	for level = (rescalesXimage(i)-1):-1:0
+		% do we need to add more here?
+		if added_here >= samplesXimage(i)
+			break
+		end
+		rescaled = imresize(gray,1/(2^level))
+		% pick out 4^(pyr_height - level) negatives
+		num_samples_level = 4^(rescalesXimage(i)-level)
+		for negative = 1:num_samples_level
+			% randomly select the window location in the image
+			x = randi(size(rescaled, 1) - feature_params.template_size);
+			y = randi(size(rescaled, 2) - feature_params.template_size);
+			% do it
+			non_face = rescaled(x:(x+feature_params.template_size-1),y:(y+feature_params.template_size-1));
+			hog = vl_hog(single(non_face), feature_params.hog_cell_size);
+			features_neg(added+1,:) = reshape(hog,1,(feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+			added = added + 1;
+			added_here = added_here + 1;
+			if added_here >= samplesXimage(i)
+				break
+			end
+		end
+	end
 end
