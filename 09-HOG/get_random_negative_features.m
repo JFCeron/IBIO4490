@@ -58,6 +58,7 @@ if (num_samples < max_samples)
 	samplesXimage = floor((num_samples/max_samples)*samplesXimage);
 	samplesXimage = max(samplesXimage,1);
 end
+
 % now make that number of negative samples
 features_neg = zeros(sum(samplesXimage), (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
 added = 0;
@@ -76,13 +77,13 @@ for i = 1:num_images
 	
 	% now some scaled versions. Biggest is level 0. Skip the smallest
 	for level = (rescalesXimage(i)-1):-1:0
-		% do we need to add more here?
+		% do we need to add more negatives from this image?
 		if added_here >= samplesXimage(i)
 			break
 		end
-		rescaled = imresize(gray,1/(2^level))
+		rescaled = imresize(gray,1/(2^level));
 		% pick out 4^(pyr_height - level) negatives
-		num_samples_level = 4^(rescalesXimage(i)-level)
+		num_samples_level = 4^(rescalesXimage(i)-level);
 		for negative = 1:num_samples_level
 			% randomly select the window location in the image
 			x = randi(size(rescaled, 1) - feature_params.template_size);
