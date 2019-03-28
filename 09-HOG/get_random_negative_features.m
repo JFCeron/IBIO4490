@@ -34,6 +34,30 @@ function features_neg = get_random_negative_features(non_face_scn_path, feature_
 
 image_files = dir( fullfile( non_face_scn_path, '*.jpg' ));
 num_images = length(image_files);
+features_neg = zeros(num_samples, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
 
-% placeholder to be deleted - THIS ONLY WORKS FOR THE INITIAL DEMO
-features_neg = rand(100, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+% how many examples could we draw from each image with our method?
+examplesXimage = zeros(num_images);
+for i = 1:num_images
+	img_info = imfinfo(strcat(non_face_scn_path,'/',image_files(i).name));
+	width = img_info.Width;
+	height = img_info.Height;
+	min_dim = min(width,height);
+	% how many times can I rescale this image at a factor of 2 before going below
+	% the template size?
+	n = floor(log2(min_dim/feature_params.template_size));
+	for j = 0:n
+		examplesXimage(i) = examplesXimage(i)+4^j
+	end
+end
+
+for i = 1:num_images
+	img = imread(strcat(non_face_scn_path,'/',image_files(i).name));
+	gray = rgb2gray(img);
+
+	% first the image in 36x36
+
+
+	hog = vl_hog(single(img), feature_params.hog_cell_size);
+	features_pos(i,:) = reshape(hog,1,(feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+end
