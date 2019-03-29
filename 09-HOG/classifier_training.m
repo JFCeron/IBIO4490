@@ -13,7 +13,7 @@
 %positiveFeatures, el return del metodo get_positivefeatures
 %negativeFeatures, el return del metodo get_negative features
 
-function classifier_training(positiveFeatures,negativeFeatures)
+function[w,b] = classifier_training(positiveFeatures,negativeFeatures,conf)
 
   dimensionesPositivas = size(positiveFeatures);
   dimensionesNegativas = size(negativeFeatures);
@@ -21,13 +21,11 @@ function classifier_training(positiveFeatures,negativeFeatures)
   LabelsPositivos = repmat( 1 , [1,dimensionesPositivas(1)]);
   LabelsNegativos = repmat( -1 , [1,dimensionesNegativas(1)]);
   
-  MatrizEntrenamiento = [transpose(positiveFeatures),transpose(negativeFeatures)]  
-  vectorLabels = [LabelsPositivos,LabelsNegativos]
+  MatrizEntrenamiento = [transpose(positiveFeatures),transpose(negativeFeatures)];  
+  vectorLabels = [LabelsPositivos,LabelsNegativos];
   
 
-  if ~exist(conf.modelPath)
-    switch conf.svm.solver
-      case {'sgd', 'sdca'}
+
       	tamanioMuestra = size(vectorLabels) ;
         lambda =  1/(conf.svm.C*tamanioMuestra(2)) ;
         
@@ -39,12 +37,8 @@ function classifier_training(positiveFeatures,negativeFeatures)
             'MaxNumIterations', 50/lambda, ...
             'BiasMultiplier', conf.svm.biasMultiplier, ...
             'Epsilon', 1e-3);
-    end
 
     model.b = conf.svm.biasMultiplier * b ;
     model.w = w ;
 
-    save(conf.modelPath, 'model') ;
-  else
-    load(conf.modelPath) ;
-  end
+    
