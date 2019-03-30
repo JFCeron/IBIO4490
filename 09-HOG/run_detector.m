@@ -39,97 +39,78 @@ function [bboxes, confidences, image_ids] = ....
 % non-maximum suppression. For your initial debugging, you can operate only
 % at a single scale and you can skip calling non-maximum suppression.
 
-test_scenes = dir( fullfile( test_scn_path, '*.jpg' ));
+% number of scales in the pyramid for each test scene
+n_scales = 20;
+% sliding window overlap ratio
+r_overlap = 0.75;
+overlap = floor(feature_params.template_size*r_overlap);
+% threshold for considering an SVM face detection positive
+face_threshold = 5;
 
+test_scenes = dir( fullfile( test_scn_path, '*.jpg' ));
 %initialize these as empty and incrementally expand them.
 bboxes = zeros(0,4);
 confidences = zeros(0,1);
 image_ids = cell(0,1);
 
-
-%Starts the loop for every test scene(every test image)
+% for every test scene
 for i = 1:length(test_scenes)
-    
+    % this scene's face detections, confidences + scene id
+    bboxes_scene = zeros(0,4);
+    confidences_scene = zeros(0,1);
+    image_ids_scene = cell(0,1);
     %prints the current image in the loop and if it is not in grey scale then turns it to grey scale
     fprintf('Detecting faces in %s\n', test_scenes(i).name)
     img = imread( fullfile( test_scn_path, test_scenes(i).name ));
-    img = single(img)/255;
+    % img = single(img)/255;
     if(size(img,3) > 1)
         img = rgb2gray(img);
     end
 
-    %number of scales in the pyramid, every umage wll have the sliding window detector pass over a gaussian pyramid in order to detect faces of different scale
-	n_scales = 100;
-	% get bounding boxes for the test scenes
-
-	  
+    % we will pass a sliding window detector at scales ranging from full image to 36xX
 	min_dim = min(size(img));
-	% scales range from full image to 36xX
 	template2img_ratio = feature_params.template_size/min_dim;
 	scales = 1:(template2img_ratio-1)/n_scales:template2img_ratio;
-
-
 	for scale = scales
-		%image is rezized
-	    smaller = imresize(img, scale);
-	    %WindoSize of the sliding window, it is an hyperparameter
-	    WindowSize =  feature_params.template_size ;
-		% a function to retrieve window information
-		aplicarHog = @(block_struct) vl_hog(single(img), feature_params.hog_cell_size)  ;
-		% Matrix that evaluates the overlapped grid, i every cell excute a Hog detector
-		WindowsArrayTemp2 = blockproc(smaller, [WindowSize WindowSize], aplicarHog, 'BorderSize', [floor(WindowSize/2) floor(WindowSize/2)], 'TrimBorder', false, 'PadPartialBlocks', false);
-		[dim1 dim2] = size(WindowsArrayTemp2) ;
-		%construct method for temporal lists that store the boxes and cofidences of positives for every pass trought a given scale
-		cur_x_min_escala = [];
-		cur_y_min_escala = [];
-		cur_confidences_escala = [];
-		%Loop over the WindowsArraTemp2 grid for doing the actual classification
-		for i=1:dim1
-			for j=1:dim2
-				%Discrimination made by the SVM
-				discriminacion = dot(reshape(WindowsArrayTemp2(i,j,:),[1,31]), w) - b;
-				WindowsArrayTemp2(i,j) = discriminacion ;
-				%Store the confidence anda top left corner for the positive detections
-				if discriminacion > 0
-					cur_x_min_escala = append(cur_x_min_escala,i*floor(WindowSize/2));
-					cur_y_min_escala = append(cur_x_min_escala,i*floor(WindowSize/2));
-					cur_confidences_escala = append(cur_confidences_escala, discriminacion);
-				end 
-			end
-		end	
+		smaller = imresize(img, scale);
 
-		%Array with the boxes coordinates
-		cur_bboxes_escala = [cur_x_min_escala, cur_y_min_escala, cur_x_min_escala + WindowSize, cur_y_min_escala + WindowSize];
+        % obtain features at sliding windows
+        % define sliding window coordinates
+        n_x_ticks = floor((size(smaller,2) - overlap)/(feature_params.template_size - overlap));
+        x_ticks = 1 + (0:(n_x_ticks-1))*(feature_params.template_size - overlap);
+        n_y_ticks = floor((size(smaller,1) - overlap)/(feature_params.template_size - overlap));
+        y_ticks = 1 + (0:(n_y_ticks-1))*(feature_params.template_size - overlap);
+        % obtain features at each window
+        windows_features = zeros(n_y_ticks*n_x_ticks, (feature_params.template_size / feature_params.hog_cell_size)^2 * 31);
+        % store top left corners to later write bounding boxes
+        top_left_corners = zeros(n_y_ticks*n_x_ticks, 2);
+        added = 0;
+        for x = x_ticks
+            for y = y_ticks
+                sliding_window = smaller(y:(y+feature_params.template_size-1), x:(x+feature_params.template_size-1));
+                window_descriptor = vl_hog(single(sliding_window),feature_params.hog_cell_size);
+                windows_features(added + 1,:) = reshape(window_descriptor, 1, []);
+                top_left_corners(added + 1,:) = [x y];
+                added = added + 1;
+            end
+        end
 
-    	cur_image_ids(1:length(cur_confidences_escala),1) = {test_scenes(i).name};
-    
-    	%non_max_supr_bbox can actually get somewhat slow with thousands of
-    	%initial detections. You could pre-filter the detections by confidence,
-    	%e.g. a detection with confidence -1.1 will probably never be
-   		%meaningful. You probably _don't_ want to threshold at 0.0, though. You
-    	%can get higher recall with a lower threshold. You don't need to modify
-   		 %anything in non_max_supr_bbox, but you can.
-    	[is_maximum] = non_max_supr_bbox(cur_bboxes_escala, cur_confidences_escala, size(smaller));
-
-    	cur_confidences_escala = cur_confidences_escala(is_maximum,:);
-    	cur_bboxes_escala      = cur_bboxes_escala(     is_maximum,:);
-    	cur_image_ids_escala   = cur_image_ids_escala(  is_maximum,:);
- 				
-    	%Adjusting boxes to real size
-    	cur_bboxes = cur_bboxes_escala / scale; 
-    	%Adding to return lists
-    	bboxes      = [bboxes;      cur_bboxes];
-    	confidences = [confidences; cur_confidences];
-    	image_ids   = [image_ids;   cur_image_ids];
-
-
-
-
-
-	    	size(smaller)
+        % classify windows
+        w = reshape(w, [], 1);
+        b = reshape(b, [], 1);
+        confidences_scale = windows_features*w - b;
+        positives = confidences_scale > 0;
+        % obtain bounding boxes and confidences for the image at this scale
+        confidences_scale = confidences_scale(positives);
+        bboxes_scale = [top_left_corners(positives,:) top_left_corners(positives,:)+feature_params.template_size];
+        % normalize bounding boxes by scale before adding them to the scene bboxes list
+        bboxes_scene      = [bboxes_scene;      floor(bboxes_scale/scale)];
+        confidences_scene = [confidences_scene; confidences_scale];
 	end
+    % filter the scene's bboxes by non-maximum supression
+    [is_maximum] = non_max_supr_bbox(bboxes_scene, confidences_scene, size(img));
+    % add this scene's bboxes to the list of all bboxes in the test set
+    bboxes      = [bboxes;      bboxes_scene(is_maximum,:)];
+    confidences = [confidences; confidences_scene(is_maximum,:)];
+    image_ids   = [image_ids;   transpose(repelem({fullfile(test_scn_path, test_scenes(i).name)}, sum(is_maximum)))];
 end
-
-
-
-
