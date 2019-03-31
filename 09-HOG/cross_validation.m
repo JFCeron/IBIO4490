@@ -1,5 +1,4 @@
 % performs detections at different levels of n_scales_multiplier and r_overlap and reports goodness measures
-
 close all
 clear
 run('vlfeat/toolbox/vl_setup')
@@ -25,15 +24,37 @@ num_negative_examples = 20000; %Higher will work strictly better, but you should
 features_neg = get_random_negative_features( non_face_scn_path, feature_params, num_negative_examples);
 [w,b] = classifier_training(features_pos,features_neg,conf);
 
+% validation set bounding boxes
+val_bboxes = zeros()
+val_img_files = dir( fullfile( validation_scn_path, '*.jpg' ));
+gt_bboxes(ismember(gt_ids,val_img_files(i).name),:);
+
 % evaluate detection schema at different parametrizations
 all_n_scales_multiplier = 1:10;
 all_r_overlap = 0:0.1:0.9;
+precision = zeros(size(all_n_scales_multiplier,2), size(all_r_overlap,2));
+recall = zeros(size(all_n_scales_multiplier,2), size(all_r_overlap,2));
 for n_scales_multiplier = all_n_scales_multiplier
+	fprintf('Processing scale multiplier: %d.\n',n_scales_multiplier);
 	for r_overlap = all_r_overlap
+		fprintf('Processing overlap ratio: %d.\n',r_overlap);
 		% run the detector with these parameters in the validation set
 		[bboxes, confidences, image_ids] = run_detector(validation_scn_path, w, b, feature_params, n_scales_multiplier, r_overlap);
 		% evaluate its performance
 		[gt_ids, gt_bboxes, gt_isclaimed, tp, fp, duplicate_detections] = evaluate_detections(bboxes, confidences, image_ids, label_path);
-		% store some of that information
+		% those measurements include validation+test set
+		validation_ids = ismember(gt_ids, image_ids);
+		gt_ids = gt_ids(validation_ids);
+		gt_isclaimed = gt_isclaimed(validation_ids);
+		tp = tp(validation_ids);
+		fp = fp(validation_ids);
+
+		% store precision and recall
+		i = find(all_n_scales_multiplier==n_scales_multiplier);
+		j = find(all_r_overlap==r_overlap);
+		precision(i,j) = sum(tp)/sum(tp+fp);
+		recall(i,j) = sum(gt_isclaimed)/size(gt_isclaimed, 1);
 	end
 end
+csvwrite('precision.csv', precision);
+csvwrite('recall.csv', recall);
