@@ -57,6 +57,9 @@ feature_params = struct('template_size', 36, 'hog_cell_size', 6);
 conf.svm.C = 1;
 conf.svm.biasMultiplier = 1;
 conf.svm.solver = 'sgd';
+% detection schema parameters
+n_scales_multiplier = 5;
+r_overlap = 0.75;
 
 %% Step 1. Load positive training crops and random negative examples
 %YOU CODE 'get_positive_features' and 'get_random_negative_features'
@@ -124,7 +127,7 @@ imwrite(hog_template_image, 'visualizations/hog_template.png')
 % YOU CODE 'run_detector'. Make sure the outputs are properly structured!
 % They will be interpreted in Step 6 to evaluate and visualize your
 % results. See run_detector.m for more details.
-[bboxes, confidences, image_ids] = run_detector(test_scn_path, w, b, feature_params);
+[bboxes, confidences, image_ids] = run_detector(test_scn_path, w, b, feature_params, n_scales_multiplier, r_overlap);
 
 % run_detector will have (at least) two parameters which can heavily
 % influence performance -- how much to rescale each step of your multiscale

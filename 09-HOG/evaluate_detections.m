@@ -121,6 +121,3 @@ reverse_map(si) = 1:nd;
 tp = tp(reverse_map);
 fp = fp(reverse_map);
 duplicate_detections = duplicate_detections(reverse_map);
-
-
-

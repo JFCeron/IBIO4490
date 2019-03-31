@@ -5,7 +5,10 @@
 % wrong). The non-maximum suppression is done on a per-image basis. The
 % starter code includes a call to a provided non-max suppression function.
 function [bboxes, confidences, image_ids] = .... 
-    run_detector(test_scn_path, w, b, feature_params)
+    run_detector(test_scn_path, w, b, feature_params, n_scales_multiplier, r_overlap)
+% n_scales_multiplier : the number of scales considered at each image depends on template to image ratio *n_scales_multiplier
+% r_overlap : sliding window overlap ratio
+
 % 'test_scn_path' is a string. This directory contains images which may or
 %    may not have faces in them. This function should work for the MIT+CMU
 %    test set but also for any other images (e.g. class photos)
@@ -39,13 +42,10 @@ function [bboxes, confidences, image_ids] = ....
 % non-maximum suppression. For your initial debugging, you can operate only
 % at a single scale and you can skip calling non-maximum suppression.
 
-% number of scales in the pyramid for each test scene
-n_scales = 20;
-% sliding window overlap ratio
-r_overlap = 0.75;
+% number of overlapping pixels per dimension in sliding window schema
 overlap = floor(feature_params.template_size*r_overlap);
 % threshold for considering an SVM face detection positive
-face_threshold = 5;
+face_threshold = 0;
 
 test_scenes = dir( fullfile( test_scn_path, '*.jpg' ));
 %initialize these as empty and incrementally expand them.
@@ -70,6 +70,8 @@ for i = 1:length(test_scenes)
     % we will pass a sliding window detector at scales ranging from full image to 36xX
 	min_dim = min(size(img));
 	template2img_ratio = feature_params.template_size/min_dim;
+    % the number of scales considered at each image depends on template to image ratio
+    n_scales = ceil(n_scales_multiplier/template2img_ratio);
 	scales = 1:(template2img_ratio-1)/n_scales:template2img_ratio;
 	for scale = scales
 		smaller = imresize(img, scale);
@@ -99,7 +101,7 @@ for i = 1:length(test_scenes)
         w = reshape(w, [], 1);
         b = reshape(b, [], 1);
         confidences_scale = windows_features*w + b;
-        positives = confidences_scale > 0;
+        positives = confidences_scale > face_threshold;
         % obtain bounding boxes and confidences for the image at this scale
         confidences_scale = confidences_scale(positives);
         bboxes_scale = [top_left_corners(positives,:) top_left_corners(positives,:)+feature_params.template_size];

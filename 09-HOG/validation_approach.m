@@ -1,0 +1,36 @@
+% performs detections at different levels of n_scales_multiplier and r_overlap and reports goodness measures
+
+close all
+clear
+run('vlfeat/toolbox/vl_setup')
+
+data_path = 'data/'; %change if you want to work with a network copy
+train_path_pos = fullfile(data_path, 'caltech_faces/Caltech_CropFaces'); %Positive training examples. 36x36 head crops
+non_face_scn_path = fullfile(data_path, 'train_non_face_scenes'); %We can mine random or hard negatives from here
+test_scn_path = fullfile(data_path,'test_scenes/test_jpg'); %CMU+MIT test scenes
+validation_scn_path = fullfile(data_path,'test_scenes/validation'); %CMU+MIT test scenes
+new_test_scn_path = fullfile(data_path,'test_scenes/new_test'); %CMU+MIT test scenes
+label_path = fullfile(data_path,'test_scenes/ground_truth_bboxes.txt'); %the ground truth face locations in the test set
+
+% feature extraction parameters
+feature_params = struct('template_size', 36, 'hog_cell_size', 6);
+% SVM parameters
+conf.svm.C = 1;
+conf.svm.biasMultiplier = 1;
+conf.svm.solver = 'sgd';
+
+% train a SVM classifier
+features_pos = get_positive_features( train_path_pos, feature_params );
+num_negative_examples = 20000; %Higher will work strictly better, but you should start with 10000 for debugging
+features_neg = get_random_negative_features( non_face_scn_path, feature_params, num_negative_examples);
+[w,b] = classifier_training(features_pos,features_neg,conf);
+
+% evaluate detection schema at different parametrizations
+all_n_scales_multiplier = 1:10;
+all_r_overlap = 0:0.1:0.9;
+for n_scales_multiplier = all_n_scales_multiplier
+	for r_overlap = all_r_overlap
+		% run the detector with these parameters in the validation set
+		[bboxes, confidences, image_ids] = run_detector(validation_scn_path, w, b, feature_params, n_scales_multiplier, r_overlap);
+	end
+end
