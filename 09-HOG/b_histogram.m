@@ -28,5 +28,5 @@ features_neg = get_random_negative_features( non_face_scn_path, feature_params, 
 % draw histograms for negative and positive confidences
 positive_confidences = features_pos*w + b;
 negative_confidences = features_neg*w + b;
-histogram(positive_confidences)
-histogram(negative_confidences)
+ecdf(positive_confidences)
+ecdf(negative_confidences)
