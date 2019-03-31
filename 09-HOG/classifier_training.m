@@ -23,13 +23,8 @@ function[w,b] = classifier_training(positiveFeatures,negativeFeatures,conf)
   
   MatrizEntrenamiento = [transpose(positiveFeatures),transpose(negativeFeatures)];  
   vectorLabels = [LabelsPositivos,LabelsNegativos];
-  
-
-
       	tamanioMuestra = size(vectorLabels) ;
         lambda =  1/(conf.svm.C*tamanioMuestra(2)) ;
-        
-          
           fprintf('Training model') ;
           y = vectorLabels ;
           [w b info] = vl_svmtrain(MatrizEntrenamiento, vectorLabels, lambda, ...

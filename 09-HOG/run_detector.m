@@ -98,7 +98,7 @@ for i = 1:length(test_scenes)
         % classify windows
         w = reshape(w, [], 1);
         b = reshape(b, [], 1);
-        confidences_scale = windows_features*w - b;
+        confidences_scale = windows_features*w + b;
         positives = confidences_scale > 0;
         % obtain bounding boxes and confidences for the image at this scale
         confidences_scale = confidences_scale(positives);

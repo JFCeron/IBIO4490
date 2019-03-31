@@ -41,7 +41,7 @@ run('vlfeat/toolbox/vl_setup')
 
 [~,~,~] = mkdir('visualizations');
 
-data_path = '../data/'; %change if you want to work with a network copy
+data_path = 'data/'; %change if you want to work with a network copy
 train_path_pos = fullfile(data_path, 'caltech_faces/Caltech_CropFaces'); %Positive training examples. 36x36 head crops
 non_face_scn_path = fullfile(data_path, 'train_non_face_scenes'); %We can mine random or hard negatives from here
 test_scn_path = fullfile(data_path,'test_scenes/test_jpg'); %CMU+MIT test scenes
@@ -59,11 +59,9 @@ feature_params = struct('template_size', 36, 'hog_cell_size', 6);
 %YOU CODE 'get_positive_features' and 'get_random_negative_features'
 
 features_pos = get_positive_features( train_path_pos, feature_params );
-
 num_negative_examples = 10000; %Higher will work strictly better, but you should start with 10000 for debugging
 features_neg = get_random_negative_features( non_face_scn_path, feature_params, num_negative_examples);
 
-    
 %% step 2. Train Classifier
 % Use vl_svmtrain on your training features to get a linear classifier
 % specified by 'w' and 'b'
@@ -73,8 +71,7 @@ features_neg = get_random_negative_features( non_face_scn_path, feature_params, 
 % work best e.g. 0.0001, but you can try other values
 
 %YOU CODE classifier training. Make sure the outputs are 'w' and 'b'.
-w = rand((feature_params.template_size / feature_params.hog_cell_size)^2 * 31,1); %placeholder, delete
-b = rand(1); %placeholder, delete
+[w,b] = classifier_training(features_pos,features_neg,conf);
 
 %% step 3. Examine learned classifier
 % You don't need to modify anything in this section. The section first
