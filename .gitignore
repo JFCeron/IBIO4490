@@ -15,3 +15,4 @@ _data/
 .pickle*
 BSDS_small
 LabHOG
+experiments
