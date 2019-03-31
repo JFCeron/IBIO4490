@@ -112,5 +112,5 @@ for i = 1:length(test_scenes)
     % add this scene's bboxes to the list of all bboxes in the test set
     bboxes      = [bboxes;      bboxes_scene(is_maximum,:)];
     confidences = [confidences; confidences_scene(is_maximum,:)];
-    image_ids   = [image_ids;   transpose(repelem(test_scenes(i).name), sum(is_maximum))];
+    image_ids   = [image_ids;   transpose(repelem(test_scenes(i).name, sum(is_maximum)))];
 end
