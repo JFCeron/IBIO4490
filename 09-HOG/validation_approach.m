@@ -32,5 +32,8 @@ for n_scales_multiplier = all_n_scales_multiplier
 	for r_overlap = all_r_overlap
 		% run the detector with these parameters in the validation set
 		[bboxes, confidences, image_ids] = run_detector(validation_scn_path, w, b, feature_params, n_scales_multiplier, r_overlap);
+		% evaluate its performance
+		[gt_ids, gt_bboxes, gt_isclaimed, tp, fp, duplicate_detections] = evaluate_detections(bboxes, confidences, image_ids, label_path);
+		% store some of that information
 	end
 end

@@ -72,7 +72,7 @@ for i = 1:length(test_scenes)
 	template2img_ratio = feature_params.template_size/min_dim;
     % the number of scales considered at each image depends on template to image ratio
     n_scales = ceil(n_scales_multiplier/template2img_ratio);
-	scales = 1:(template2img_ratio-1)/n_scales:template2img_ratio;
+	scales = 2:(template2img_ratio-2)/n_scales:template2img_ratio;
 	for scale = scales
 		smaller = imresize(img, scale);
 
