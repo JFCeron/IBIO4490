@@ -54,5 +54,4 @@ for i = 1:n_val
 end
 
 % how far are true faces from our hyperplane?
-
-histogram(val_faces_features*w);
+ecdf(val_faces_features*w+b)
