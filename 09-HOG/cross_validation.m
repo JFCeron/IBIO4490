@@ -24,11 +24,6 @@ num_negative_examples = 20000; %Higher will work strictly better, but you should
 features_neg = get_random_negative_features( non_face_scn_path, feature_params, num_negative_examples);
 [w,b] = classifier_training(features_pos,features_neg,conf);
 
-% validation set bounding boxes
-val_bboxes = zeros()
-val_img_files = dir( fullfile( validation_scn_path, '*.jpg' ));
-gt_bboxes(ismember(gt_ids,val_img_files(i).name),:);
-
 % evaluate detection schema at different parametrizations
 all_n_scales_multiplier = 1:10;
 all_r_overlap = 0:0.1:0.9;
