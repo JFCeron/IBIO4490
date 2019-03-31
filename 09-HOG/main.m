@@ -53,7 +53,10 @@ label_path = fullfile(data_path,'test_scenes/ground_truth_bboxes.txt'); %the gro
 %parameters such as the number of orientations, but that does not help
 %performance in our limited test.
 feature_params = struct('template_size', 36, 'hog_cell_size', 6);
-
+% SVM parameters
+conf.svm.C = 1;
+conf.svm.biasMultiplier = 1;
+conf.svm.solver = 'sgd';
 
 %% Step 1. Load positive training crops and random negative examples
 %YOU CODE 'get_positive_features' and 'get_random_negative_features'
