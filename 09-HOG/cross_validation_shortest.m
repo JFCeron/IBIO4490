@@ -51,5 +51,5 @@ for n_scales_multiplier = all_n_scales_multiplier
 		recall(i,j) = sum(gt_isclaimed)/size(gt_isclaimed, 1);
 	end
 end
-csvwrite('precision_shorter.csv', precision);
-csvwrite('recall_shorter.csv', recall);
+csvwrite('precision_shortest.csv', precision);
+csvwrite('recall_shortest.csv', recall);
