@@ -3,6 +3,12 @@
 # https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+import pickle
+import time
+from sklearn.metrics import precision_recall_curve
+import cv2
+import os
 
 def sigmoid(x):
     return 1/(1+np.exp(-x))
@@ -59,6 +65,7 @@ class Model():
         self.lr = 0.00001 # Change if you want
         self.W = np.random.randn(params, out)
         self.b = np.random.randn(out)
+        self.train_time = 0
 
     def forward(self, image):
         image = image.reshape(image.shape[0], -1)
@@ -78,9 +85,11 @@ class Model():
         self.b -= b_grad*self.lr
 
 def train(model):
+    # save total training time
+    start_time = time.time()
     x_train, y_train, x_test, y_test = get_data()
     batch_size = 100 # Change if you want
-    epochs = 40000 # Change if you want
+    epochs = 5  # Change if you want
     for i in range(epochs):
         loss = []
         for j in range(0,x_train.shape[0], batch_size):
@@ -92,21 +101,78 @@ def train(model):
         out = model.forward(x_test)                
         loss_test = model.compute_loss(out, y_test)
         print('Epoch {:6d}: {:.5f} | test: {:.5f}'.format(i, np.array(loss).mean(), loss_test))
-	# plot()
+    # store training time and losses
+    model.train_time = time.time() - start_time
+    np.save("loss_e"+ str(epochs)+"_batch"+ str(batch_size) +"_lr"+str(model.lr)+".npy", np.array(loss))
+    # pickle the trained model object
+    model_file = open("model_e"+ str(epochs) + "_batch"+ str(batch_size) +"_lr"+ str(model.lr) +".obj", "wb")
+    pickle.dump(model, model_file)
 
-def plot(): # Add arguments
-    # CODE HERE
-    # Save a pdf figure with train and test losses
-    pass
+def plot(train_loss, test_loss):
+    assert train_loss.shape==test_loss.shape,  "Different length matrices provided."
+    # set color scales for train (blue) and test (red) set
+    norm = mpl.colors.Normalize(vmin=0, vmax=train_loss.shape[0])
+    cmap_train = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+    cmap_train.set_array([])
+    cmap_test = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Reds)
+    cmap_test.set_array([])
+    # one x tick per epoch
+    x_ticks = range(train_loss.shape[1])
+    
+    # plot train and test losses at R learning rates across N epochs
+    fig, ax = plt.subplots(dpi=100)
+    for i in range(train_loss.shape[0]):
+       ax.plot(x_ticks, train_loss[i,:], c=cmap_train.to_rgba(i + 1))
+       ax.plot(x_ticks, test_loss[i,:], c=cmap_test.to_rgba(i + 1))
+    plt.gca().legend(('Train loss, small lr','Test loss, small lr'))
+    plt.show()
+    # TODO guardar imagen en pdf
 
 def test(model):
-    # _, _, x_test, y_test = get_data()
-    # YOU CODE HERE
-    # Show some qualitative results and the total accuracy for the whole test set
-    pass
+    x_train, y_train, x_test, y_test = get_data()
+    y_pred = np.zeros((x_test.shape[0],1)) 
+    y_pred[model.forward(x_test) < 0] = 1
+    precision, recall, thresholds = precision_recall_curve(y_test, sigmoid(model.forward(x_test)))    
+    # plot ROC curve
+    plt.plot(recall, precision)
+    # and report goodness measures
+    Fmeasure = (2*precision*recall)/(precision + recall)
+    FmeasureMax = Fmeasure.max()
+    print("Max F1-measure: "+ str(FmeasureMax))
+    print("ACA: " + str(0))
 
 if __name__ == '__main__':
     model = Model()
-    train(model)
-    test(model)
+    if "--test" in sys.argv:
+        test(model)
+    elif "--demo" in sys.argv:
 
+	pickle_off = open("modelPrueba.obj","rb")
+	model = pickle.load(pickle_off)
+	
+	
+      	archivos = os.listdir('./in-to-the-wild/')
+	imagenesMostrar = random.sample()
+	font = cv2.FONT_HERSHEY_SIMPLEX
+	def recortarGuardar(file):
+	    img = cv2.imread(file)
+	    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	    gray = cv2.resize(gray,(48,48))
+	    imageTag =  sigmoid(model.forward(gray))
+	    gray = cv2.putText(gray, imageTag, (10,80),font,0.4,300,2)
+	    return gray
+	ListaImagenes = [recortar-guardar(y) for y in imagenesMostrar]
+	vstack1 = np.vstack((ListaImagenes[0],ListaImagenes[1]))
+	vstack2 = np.vstack((ListaImagenes[2],ListaImagenes[3]))
+	vstack3 = np.vstack((ListaImagenes[4],ListaImagenes[5]))
+
+	hstack1 = np.hstack((vstack1,vstack2))
+	hstack2 = np.hstack((hstack1,vstack3))
+
+
+	cv2.imshow("frame1",hstack2) #display in windows 
+	cv2.waitKey(0) 
+
+    else:
+        train(model)
+        test(model)
