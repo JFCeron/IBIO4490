@@ -1,4 +1,3 @@
-
 # read kaggle facial expression recognition challenge dataset (fer2013.csv)
 # https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge
 import numpy as np
@@ -29,15 +28,15 @@ def get_data():
     x_train, y_train, x_test, y_test = [], [], [], []
 
     for i in range(1,num_of_instances):
-        emotion, img, usage = lines[i].split(",")
-        pixels = np.array(img.split(" "), 'float32')
-        # emotion = 1 if int(emotion)==3 else 0 # Only for happiness
-        if 'Training' in usage:
-            y_train.append(emotion)
-            x_train.append(pixels)
-        elif 'PublicTest' in usage:
-            y_test.append(emotion)
-            x_test.append(pixels)
+    emotion, img, usage = lines[i].split(",")
+    pixels = np.array(img.split(" "), 'float32')
+    # emotion = 1 if int(emotion)==3 else 0 # Only for happiness
+    if 'Training' in usage:
+        y_train.append(emotion)
+        x_train.append(pixels)
+    elif 'PublicTest' in usage:
+        y_test.append(emotion)
+        x_test.append(pixels)
 
     #------------------------------
     #data transformation for train and test sets
@@ -54,6 +53,7 @@ def get_data():
     x_train = np.delete(x_train, val_indices, axis=0)
 
     x_train /= 255 #normalize inputs between [0, 1]
+    x_val /= 255
     x_test /= 255
 
     #x_train = x_train.reshape(x_train.shape[0], 48, 48)
@@ -74,7 +74,7 @@ class Model():
         self.C = 7 # number of classes
         self.params = 48*48 # pixels * number of classes
         self.lr = 0.00001 # Change if you want
-        self.W = np.random.randn(params, self.C)
+        self.W = np.random.randn(self.params, self.C)
         self.b = np.random.randn(1, self.C)
         self.train_time = 0
 
@@ -92,11 +92,29 @@ class Model():
         return J
 
     def compute_gradient(self, image, pred, gt):
+        # different dimensions in the matrices
+        F = image.shape[1]
+        C = self.C
+        N = image.shape[0]
         # same convenient matrix
-        B = np.zeros((gt.shape[0],C))
-        W_grad = np.zeros((self.params, self.C))
-        for i in range(C):
-            #W_grad += B[i,:] - 
+        B = np.zeros((N,C))
+        for i in range(N: B[i,gt[i,0]] = 1
+
+        # calculate W gradient
+        B = B.reshape(1, 1, N, C) # Dirac i=y(x)
+        X = np.transpose(image).reshape(F, 1, N, 1) # data
+        P = np.transpose(pred).reshape(1, C, N, 1) # predicted
+        M = np.identity(C).reshape(1, C, 1, C) # Dirac i=c
+        W_grad = -np.sum(B*(X*(M-P)))
+        # and b gradient
+        B = B.reshape(1, N, C)
+        P = P.reshape(C, N, 1)
+        M = M.reshape(C, 1, C)
+        b_grad = -np.sum(B*(M-P))
+
+        # finally update
+        self.W -= W_grad*self.lr
+        self.b -= b_grad*self.lr
 
 def train(model):
     # start recording time
@@ -117,7 +135,7 @@ def train(model):
         # validation and training loss in this epoch
         # estimate train loss on val-sized subset of train
         train_subset = np.random.choice(range(len(x_train)), size=len(x_val), replace=False)
-        losses[0,i] = model.compute_loss(model.forward(x_train[train_subset]), y_train[train_subset)
+        losses[0,i] = model.compute_loss(model.forward(x_train[train_subset]), y_train[train_subset])
         losses[1,i] = model.compute_loss(model.forward(x_val), y_val)
         # this might be the lowest validation error
         if losses[1,i]==np.min(losses[1,:i]):
@@ -170,31 +188,31 @@ if __name__ == '__main__':
         test(model)
     elif "--demo" in sys.argv:
 
-	pickle_off = open("modelPrueba.obj","rb")
-	model = pickle.load(pickle_off)
+                pickle_off = open("modelPrueba.obj","rb")
+                model = pickle.load(pickle_off)
 
 
-      	archivos = os.listdir('./in-to-the-wild/')
-	imagenesMostrar = random.sample()
-	font = cv2.FONT_HERSHEY_SIMPLEX
-	def recortarGuardar(file):
-	    img = cv2.imread(file)
-	    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	    gray = cv2.resize(gray,(48,48))
-	    imageTag =  sigmoid(model.forward(gray))
-	    gray = cv2.putText(gray, imageTag, (10,80),font,0.4,300,2)
-	    return gray
-	ListaImagenes = [recortar-guardar(y) for y in imagenesMostrar]
-	vstack1 = np.vstack((ListaImagenes[0],ListaImagenes[1]))
-	vstack2 = np.vstack((ListaImagenes[2],ListaImagenes[3]))
-	vstack3 = np.vstack((ListaImagenes[4],ListaImagenes[5]))
+               archivos = os.listdir('./in-to-the-wild/')
+                imagenesMostrar = random.sample()
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                def recortarGuardar(file):
+                    img = cv2.imread(file)
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    gray = cv2.resize(gray,(48,48))
+                    imageTag =  sigmoid(model.forward(gray))
+                    gray = cv2.putText(gray, imageTag, (10,80),font,0.4,300,2)
+                    return gray
+                ListaImagenes = [recortar-guardar(y) for y in imagenesMostrar]
+                vstack1 = np.vstack((ListaImagenes[0],ListaImagenes[1]))
+                vstack2 = np.vstack((ListaImagenes[2],ListaImagenes[3]))
+                vstack3 = np.vstack((ListaImagenes[4],ListaImagenes[5]))
 
-	hstack1 = np.hstack((vstack1,vstack2))
-	hstack2 = np.hstack((hstack1,vstack3))
+                hstack1 = np.hstack((vstack1,vstack2))
+                hstack2 = np.hstack((hstack1,vstack3))
 
 
-	cv2.imshow("frame1",hstack2) #display in windows
-	cv2.waitKey(0)
+                cv2.imshow("frame1",hstack2) #display in windows
+                cv2.waitKey(0)
 
     else:
         train(model)
