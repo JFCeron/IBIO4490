@@ -28,15 +28,15 @@ def get_data():
     x_train, y_train, x_test, y_test = [], [], [], []
 
     for i in range(1,num_of_instances):
-    emotion, img, usage = lines[i].split(",")
-    pixels = np.array(img.split(" "), 'float32')
-    # emotion = 1 if int(emotion)==3 else 0 # Only for happiness
-    if 'Training' in usage:
-        y_train.append(emotion)
-        x_train.append(pixels)
-    elif 'PublicTest' in usage:
-        y_test.append(emotion)
-        x_test.append(pixels)
+        emotion, img, usage = lines[i].split(",")
+        pixels = np.array(img.split(" "), 'float32')
+        # emotion = 1 if int(emotion)==3 else 0 # Only for happiness
+        if 'Training' in usage:
+            y_train.append(emotion)
+            x_train.append(pixels)
+        elif 'PublicTest' in usage:
+            y_test.append(emotion)
+            x_test.append(pixels)
 
     #------------------------------
     #data transformation for train and test sets
