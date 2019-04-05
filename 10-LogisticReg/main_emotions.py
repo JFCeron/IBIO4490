@@ -138,7 +138,7 @@ def train(model):
         losses[0,i] = model.compute_loss(model.forward(x_train[train_subset]), y_train[train_subset])
         losses[1,i] = model.compute_loss(model.forward(x_val), y_val)
         # this might be the lowest validation error
-        if losses[1,i]==np.min(losses[1,:i]):
+        if i>0 and losses[1,i]==np.min(losses[1,:i]):
             final_model = deepcopy(model)
         if epoch % 20 == 0:
             print("Epoch "+str(epoch)+": Train loss="+str(losses[0,i])+", Validation loss="+str(losses[1,i]))
