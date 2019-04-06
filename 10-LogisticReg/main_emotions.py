@@ -75,7 +75,7 @@ class Model():
     def __init__(self):
         self.C = 7 # number of classes
         self.params = 48*48 # pixels * number of classes
-        self.lr = 0.01 # Change if you want
+        self.lr = 1 # Change if you want
         self.W = np.random.randn(self.params, self.C)
         self.b = np.random.randn(1, self.C)
         self.train_time = 0
