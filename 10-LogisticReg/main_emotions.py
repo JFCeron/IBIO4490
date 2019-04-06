@@ -9,6 +9,7 @@ import time
 import cv2
 import os
 from copy import deepcopy
+import pdb
 
 # cast the rows of M to probabilities
 def softmax(M):
@@ -73,7 +74,7 @@ class Model():
     def __init__(self):
         self.C = 7 # number of classes
         self.params = 48*48 # pixels * number of classes
-        self.lr = 0.00001 # Change if you want
+        self.lr = 0.01 # Change if you want
         self.W = np.random.randn(self.params, self.C)
         self.b = np.random.randn(1, self.C)
         self.train_time = 0
@@ -86,7 +87,7 @@ class Model():
     def compute_loss(self, pred, gt):
         # pred has vectors of probabilities for rows
         # true labels to convenient binary matrix
-        B = np.zeros((gt.shape[0],C))
+        B = np.zeros((gt.shape[0],self.C))
         for i in range(len(gt)): B[i,gt[i,0]] = 1
         J = np.sum(np.ma.log(np.multiply(pred, B)))*(-1/pred.shape[0])
         return J
@@ -105,23 +106,23 @@ class Model():
         X = np.transpose(image).reshape(F, 1, N, 1) # data
         P = np.transpose(pred).reshape(1, C, N, 1) # predicted
         M = np.identity(C).reshape(1, C, 1, C) # Dirac i=c
-        W_grad = -np.sum(B*(X*(M-P)))
+        W_grad = -np.sum(B*(X*(M-P)), axis=(2,3))/N
         # and b gradient
         B = B.reshape(1, N, C)
         P = P.reshape(C, N, 1)
         M = M.reshape(C, 1, C)
-        b_grad = -np.sum(B*(M-P))
+        b_grad = -np.sum(B*(M-P), axis=(1,2))/N
 
         # finally update
         self.W -= W_grad*self.lr
         self.b -= b_grad*self.lr
-
+        
 def train(model):
     # start recording time
     start_time = time.time()
     x_train, y_train, x_val, y_val, x_test, y_test = get_data()
     batch_size = 2000 # Change if you want
-    epochs = 10000  # Change if you want
+    epochs = 100  # Change if you want
     # first row: train losses, second : val losses
     losses = np.zeros((2,epochs))
     # model with minimum validation set error
@@ -140,8 +141,8 @@ def train(model):
         # this might be the lowest validation error
         if i>0 and losses[1,i]==np.min(losses[1,:i]):
             final_model = deepcopy(model)
-        if epoch % 20 == 0:
-            print("Epoch "+str(epoch)+": Train loss="+str(losses[0,i])+", Validation loss="+str(losses[1,i]))
+        if i % 20 == 0:
+            print("Epoch "+str(i)+": Train loss="+str(losses[0,i])+", Validation loss="+str(losses[1,i]))
     # store total computation time, losses and model
     final_model.train_time = time.time() - start_time
     np.save("losses/softmax_lr"+str(model.lr)+".npy", np.array(losses))
