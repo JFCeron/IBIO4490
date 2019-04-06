@@ -116,13 +116,13 @@ class Model():
         # finally update
         self.W -= W_grad*self.lr
         self.b -= b_grad*self.lr
-        
+
 def train(model):
     # start recording time
     start_time = time.time()
     x_train, y_train, x_val, y_val, x_test, y_test = get_data()
-    batch_size = 2000 # Change if you want
-    epochs = 100  # Change if you want
+    batch_size = 400 # Change if you want
+    epochs = 2000  # Change if you want
     # first row: train losses, second : val losses
     losses = np.zeros((2,epochs))
     # model with minimum validation set error
@@ -142,13 +142,14 @@ def train(model):
         if i>0 and losses[1,i]==np.min(losses[1,:i]):
             final_model = deepcopy(model)
         if i % 20 == 0:
-            print("Epoch "+str(i)+": Train loss="+str(losses[0,i])+", Validation loss="+str(losses[1,i]))
-    # store total computation time, losses and model
-    final_model.train_time = time.time() - start_time
-    np.save("losses/softmax_lr"+str(model.lr)+".npy", np.array(losses))
-    # pickle the trained model object
-    model_file = open("models/softmax_lr"+str(model.lr)+".obj", "wb")
-    pickle.dump(final_model, model_file)
+            print("Epoch "+str(i)+", lr="+str(model.lr)+": Train loss="+str(losses[0,i])+", Validation loss="+str(losses[1,i]))
+            # store total computation time, losses and current best model
+            final_model.train_time = time.time() - start_time
+            np.save("losses/softmax_lr"+str(model.lr)+".npy", np.array(losses))
+            # pickle the trained model object
+            model_file = open("models/softmax_lr"+str(model.lr)+".obj", "wb")
+            pickle.dump(final_model, model_file)
+
 
 def plot(train_loss, val_loss):
     assert train_loss.shape==val_loss.shape,  "Different length matrices provided."
