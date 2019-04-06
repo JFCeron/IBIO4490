@@ -21,7 +21,7 @@ def losses_plot (regression):
     # forget about trailing zeros
     not_trailing_zeros = np.prod(train_loss * val_loss, axis=0) > 0
     train_loss = train_loss[:,not_trailing_zeros]
-    train_loss = val_loss[:,not_trailing_zeros]
+    val_loss = val_loss[:,not_trailing_zeros]
 
     # set color scales for train (blue) and validation (red) set
     norm = mpl.colors.Normalize(vmin=0, vmax=train_loss.shape[0])
@@ -31,12 +31,11 @@ def losses_plot (regression):
     cmap_val.set_array([])
     # one x tick per epoch
     x_ticks = range(train_loss.shape[1])
-
     # plot train and test losses at R learning rates across N epochs
     fig, ax = plt.subplots(dpi=100)
     for i in range(train_loss.shape[0]):
        ax.plot(x_ticks, train_loss[i,:], c=cmap_train.to_rgba(i + 1))
        ax.plot(x_ticks, val_loss[i,:], c=cmap_val.to_rgba(i + 1))
     plt.gca().legend(('Train loss, smallest lr','Val loss, smallest lr'))
-    plt.show()
-    # TODO guardar imagen en pdf
+    plt.savefig("losses_"+regression)
+    
