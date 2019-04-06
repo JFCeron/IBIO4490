@@ -9,7 +9,6 @@ import time
 import cv2
 import os
 from copy import deepcopy
-import pdb
 from sklearn.metrics import confusion_matrix
 
 # cast the rows of M to probabilities
@@ -75,7 +74,7 @@ class Model():
     def __init__(self):
         self.C = 7 # number of classes
         self.params = 48*48 # pixels * number of classes
-        self.lr = 1 # Change if you want
+        self.lr = 0.01 # Change if you want
         self.W = np.random.randn(self.params, self.C)
         self.b = np.random.randn(1, self.C)
         self.train_time = 0
@@ -123,7 +122,7 @@ def train(model):
     start_time = time.time()
     x_train, y_train, x_val, y_val, x_test, y_test = get_data()
     batch_size = 400 # Change if you want
-    epochs = 2000  # Change if you want
+    epochs = 20000  # Change if you want
     # first row: train losses, second : val losses
     losses = np.zeros((2,epochs))
     # model with minimum validation set error
