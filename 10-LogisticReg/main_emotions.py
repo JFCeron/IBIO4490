@@ -10,6 +10,7 @@ import cv2
 import os
 from copy import deepcopy
 import pdb
+from sklearn.metrics import confusion_matrix
 
 # cast the rows of M to probabilities
 def softmax(M):
@@ -149,6 +150,7 @@ def train(model):
             # pickle the trained model object
             model_file = open("models/softmax_lr"+str(model.lr)+".obj", "wb")
             pickle.dump(final_model, model_file)
+    model = final_model
 
 
 def plot(train_loss, val_loss):
@@ -173,23 +175,19 @@ def plot(train_loss, val_loss):
 
 def test(model):
     x_train, y_train, x_val, y_val, x_test, y_test = get_data()
-    y_pred = np.zeros((x_test.shape[0],1))
-    y_pred[model.forward(x_test) < 0] = 1
-    precision, recall, thresholds = precision_recall_curve(y_test, sigmoid(model.forward(x_test)))
-    # plot ROC curve
-    plt.plot(recall, precision)
-    # and report goodness measures
-    Fmeasure = (2*precision*recall)/(precision + recall)
-    FmeasureMax = Fmeasure.max()
-    print("Max F1-measure: "+ str(FmeasureMax))
-    print("ACA: " + str(0))
+    pred = model.forward(x_test)
+    y_hat = np.argmax(pred, axis=1)
+    confusion = confusion_matrix(y_hat, y_test)
+    print("ACA: " + str(np.sum(np.diag(confusion))/np.sum(confusion)))
 
 if __name__ == '__main__':
-    model = Model()
     if "--test" in sys.argv:
+        pickle_in = open("models/softmax_lr0.01.obj","rb")
+        model = pickle.load(pickle_in)
         test(model)
     elif "--demo" in sys.argv:
         print("demo")
     else:
+        model = Model()
         train(model)
         test(model)
