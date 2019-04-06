@@ -148,8 +148,6 @@ if __name__ == '__main__':
     elif "--demo" in sys.argv:
 	pickle_off = open("modelPrueba.obj","rb")
 	model = pickle.load(pickle_off)
-	
-	
       	archivos = os.listdir('./in-to-the-wild/')
 	imagenesMostrar = random.sample()
 	font = cv2.FONT_HERSHEY_SIMPLEX

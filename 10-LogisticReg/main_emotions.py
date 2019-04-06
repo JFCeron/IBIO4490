@@ -1,5 +1,6 @@
 # read kaggle facial expression recognition challenge dataset (fer2013.csv)
 # https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge
+from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -8,7 +9,6 @@ import time
 import cv2
 import os
 from copy import deepcopy
-from __future__ import division
 
 # cast the rows of M to probabilities
 def softmax(M):
