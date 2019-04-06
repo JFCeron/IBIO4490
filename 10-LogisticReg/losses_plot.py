@@ -1,4 +1,7 @@
 import os
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 # regression = "softmax" OR regression = "logistic"
 def losses_plot (regression):
     loss_files = sorted(os.listdir("losses"))
@@ -9,7 +12,7 @@ def losses_plot (regression):
         if regression in loss_file:
             losses = np.load("losses/"+loss_file)
             train_loss.append(losses[0,:])
-            test_loss.append(losses[1,:])
+            val_loss.append(losses[1,:])
             lr.append(loss_file.split("lr")[1].split(".npy")[0])
     # transform and check integrity
     train_loss = np.array(train_loss)
@@ -24,8 +27,8 @@ def losses_plot (regression):
     norm = mpl.colors.Normalize(vmin=0, vmax=train_loss.shape[0])
     cmap_train = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
     cmap_train.set_array([])
-    cmap_test = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Reds)
-    cmap_test.set_array([])
+    cmap_val = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Reds)
+    cmap_val.set_array([])
     # one x tick per epoch
     x_ticks = range(train_loss.shape[1])
 
@@ -33,7 +36,7 @@ def losses_plot (regression):
     fig, ax = plt.subplots(dpi=100)
     for i in range(train_loss.shape[0]):
        ax.plot(x_ticks, train_loss[i,:], c=cmap_train.to_rgba(i + 1))
-       ax.plot(x_ticks, val_loss[i,:], c=cmap_test.to_rgba(i + 1))
+       ax.plot(x_ticks, val_loss[i,:], c=cmap_val.to_rgba(i + 1))
     plt.gca().legend(('Train loss, smallest lr','Val loss, smallest lr'))
     plt.show()
     # TODO guardar imagen en pdf
