@@ -155,6 +155,7 @@ def train(model):
 
 def plot(train_loss, val_loss):
     assert train_loss.shape==val_loss.shape,  "Different length matrices provided."
+
     # set color scales for train (blue) and validation (red) set
     norm = mpl.colors.Normalize(vmin=0, vmax=train_loss.shape[0])
     cmap_train = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
@@ -169,7 +170,7 @@ def plot(train_loss, val_loss):
     for i in range(train_loss.shape[0]):
        ax.plot(x_ticks, train_loss[i,:], c=cmap_train.to_rgba(i + 1))
        ax.plot(x_ticks, val_loss[i,:], c=cmap_test.to_rgba(i + 1))
-    plt.gca().legend(('Train loss, smallest lr','Val loss, smallest lr'))
+    plt.gca().legend(('Train loss','Val loss'))
     plt.show()
     # TODO guardar imagen en pdf
 
@@ -178,7 +179,7 @@ def test(model):
     pred = model.forward(x_test)
     y_hat = np.argmax(pred, axis=1)
     confusion = confusion_matrix(y_hat, y_test)
-    print("ACA: " + str(np.sum(np.diag(confusion))/np.sum(confusion)))
+    print("Best ACA: " + str(np.sum(np.diag(confusion))/np.sum(confusion)))
 
 if __name__ == '__main__':
     if "--test" in sys.argv:
