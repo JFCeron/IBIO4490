@@ -98,7 +98,7 @@ class Model():
         N = image.shape[0]
         # same convenient matrix
         B = np.zeros((N,C))
-        for i in range(N: B[i,gt[i,0]] = 1
+        for i in range(N): B[i,gt[i,0]] = 1
 
         # calculate W gradient
         B = B.reshape(1, 1, N, C) # Dirac i=y(x)
@@ -187,33 +187,7 @@ if __name__ == '__main__':
     if "--test" in sys.argv:
         test(model)
     elif "--demo" in sys.argv:
-
-                pickle_off = open("modelPrueba.obj","rb")
-                model = pickle.load(pickle_off)
-
-
-               archivos = os.listdir('./in-to-the-wild/')
-                imagenesMostrar = random.sample()
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                def recortarGuardar(file):
-                    img = cv2.imread(file)
-                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    gray = cv2.resize(gray,(48,48))
-                    imageTag =  sigmoid(model.forward(gray))
-                    gray = cv2.putText(gray, imageTag, (10,80),font,0.4,300,2)
-                    return gray
-                ListaImagenes = [recortar-guardar(y) for y in imagenesMostrar]
-                vstack1 = np.vstack((ListaImagenes[0],ListaImagenes[1]))
-                vstack2 = np.vstack((ListaImagenes[2],ListaImagenes[3]))
-                vstack3 = np.vstack((ListaImagenes[4],ListaImagenes[5]))
-
-                hstack1 = np.hstack((vstack1,vstack2))
-                hstack2 = np.hstack((hstack1,vstack3))
-
-
-                cv2.imshow("frame1",hstack2) #display in windows
-                cv2.waitKey(0)
-
+        print("demo")
     else:
         train(model)
         test(model)
