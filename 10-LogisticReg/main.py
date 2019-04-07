@@ -178,12 +178,13 @@ def test(model):
 if __name__ == '__main__':
     model = Model()
     if "--test" in sys.argv:
+        pickle_off = open('./models/logistic_lr1e-05.obj',"rb")
+        model = pickle.load(pickle_off)
         test(model)
     elif "--demo" in sys.argv:
 
-
         modelos = os.listdir('./models/')
-        pickle_off = open('./models/' + modelos[0],"rb")
+        pickle_off = open('./models/logistic_lr1e-05.obj',"rb")
         model = pickle.load(pickle_off)
         archivos = os.listdir('./in-the-wild/')
         imagenesMostrar = random.sample(archivos, 6)
@@ -225,8 +226,7 @@ if __name__ == '__main__':
         cv2.destroyAllWindows()
         
     else:
-         if ('fer2013.csv' not in os.listdir('.')):
-               os.system('wget https://www.dropbox.com/s/n8wen5fbzdm9ujy/fer2013.csv?dl=0')
-
+        if('fer2013.csv' not in os.listdir('.')):
+             os.system('wget https://www.dropbox.com/s/n8wen5fbzdm9ujy/fer2013.csv?dl=0')
         train(model)
         test(model)
