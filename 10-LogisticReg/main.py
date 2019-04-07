@@ -11,7 +11,7 @@ import os
 from copy import deepcopy
 import random
 import pdb
-
+from sklearn.metrics import confusion_matrix
 def sigmoid(x):
     one = 0.9999
     zero = 0.0001
@@ -80,7 +80,7 @@ class Model():
     def __init__(self):
         params = 48*48 # image reshape
         out = 1 # smile label
-        self.lr = 100 # Change if you want
+        self.lr = 0.01 # Change if you want
         self.W = np.random.randn(params, out)
         self.b = np.random.randn(out)
         self.train_time = 0
@@ -165,6 +165,8 @@ def test(model):
     plt.plot(recall, precision)
     plt.savefig('PRcurve_model_lr' + str(model.lr) + '.jpg')
     # and report goodness measures
+    precision[precision == 0] = 0.0001
+    recall[recall == 0] = 0.001
     Fmeasure = (2*precision*recall)/(precision + recall)
     FmeasureMax = Fmeasure.max()
     pred = model.forward(x_test)
