@@ -186,6 +186,8 @@ if __name__ == '__main__':
         model = pickle.load(pickle_in)
         test(model)
     elif "--demo" in sys.argv:
+
+
         modelos = os.listdir('./models/')
         pickle_off = open('./models/' + modelos[0],"rb")
         model = pickle.load(pickle_off)
@@ -207,26 +209,14 @@ if __name__ == '__main__':
         ListaImagenes = np.array(ListaImagenes)
         ListaIamgenesParaMostrar = np.array(ListaIamgenesParaMostrar)
         ListaImagenes = ListaImagenes /  255
-        imageTag =  sigmoid(ListaImagenes.reshape(ListaImagenes.shape[0]),-1)
-
+        Listaimagenes = ListaImagenes.reshape(ListaImagenes.shape[0],-1)
+        imageTag =  model.forward(ListaImagenes)
         for i in range(0,6):
             text = ''
-            emocion = np.argmax(imageTag)
-            if (emocion ==0):
-                   text = 'angry'
-            elif(emocion == 1):
-                   text = 'Disgust'
-            elif(emocion == 3):
-                   text = 'Fear'
-            elif(emocion == 4):
-                   text = 'Happy'
-            elif(emocion == 5):
-                   text = 'Sad'
-            elif(emocion == 6):
-                   text = 'Surprise'
-            elif(emocion == 7):
-                   text == 'Neutral'
- 
+            arg
+                   text = 'No feliz'
+            else:
+                   text = 'feliz' 
             ListaIamgenesParaMostrar[i] = cv2.putText(ListaIamgenesParaMostrar[i], text, (40,40),font,1,200,2)
 
         vstack1 = np.vstack((ListaIamgenesParaMostrar[0],ListaIamgenesParaMostrar[1]))
