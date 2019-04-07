@@ -10,7 +10,8 @@ import cv2
 import os
 from copy import deepcopy
 from sklearn.metrics import confusion_matrix
-
+import random
+import pdb
 # cast the rows of M to probabilities
 def softmax(M):
     e_power = np.exp(M)
@@ -187,8 +188,9 @@ if __name__ == '__main__':
         test(model)
     elif "--demo" in sys.argv:
         modelos = os.listdir('./models/')
-        pickle_off = open('./models/' + modelos[0],"rb")
-        model = pickle.load(pickle_off)
+        #pickle_off = open("models/softmax_lr0.01.obj","rb")
+        #model = pickle.load(pickle_off)
+        model = Model()
         archivos = os.listdir('./in-the-wild/')
         imagenesMostrar = random.sample(archivos, 6)
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -207,26 +209,25 @@ if __name__ == '__main__':
         ListaImagenes = np.array(ListaImagenes)
         ListaIamgenesParaMostrar = np.array(ListaIamgenesParaMostrar)
         ListaImagenes = ListaImagenes /  255
-        imageTag =  sigmoid(ListaImagenes.reshape(ListaImagenes.shape[0]),-1)
+        imageTag =  model.forward(ListaImagenes.reshape(ListaImagenes.shape[0],-1))
 
         for i in range(0,6):
             text = ''
-            emocion = np.argmax(imageTag)
+            emocion = np.argmax(imageTag[i])
             if (emocion ==0):
                    text = 'angry'
-            elif(emocion == 1):
+            if(emocion == 1):
                    text = 'Disgust'
-            elif(emocion == 3):
+            if(emocion == 3):
                    text = 'Fear'
-            elif(emocion == 4):
+            if(emocion == 4):
                    text = 'Happy'
-            elif(emocion == 5):
+            if(emocion == 5):
                    text = 'Sad'
-            elif(emocion == 6):
+            if(emocion == 6):
                    text = 'Surprise'
-            elif(emocion == 7):
-                   text == 'Neutral'
- 
+            if(emocion == 7):
+                   text = 'Neutral'
             ListaIamgenesParaMostrar[i] = cv2.putText(ListaIamgenesParaMostrar[i], text, (40,40),font,1,200,2)
 
         vstack1 = np.vstack((ListaIamgenesParaMostrar[0],ListaIamgenesParaMostrar[1]))
