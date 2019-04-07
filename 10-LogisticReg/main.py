@@ -225,5 +225,8 @@ if __name__ == '__main__':
         cv2.destroyAllWindows()
         
     else:
+         if ('fer2013.csv' not in os.listdir('.')):
+               os.system('wget https://www.dropbox.com/s/n8wen5fbzdm9ujy/fer2013.csv?dl=0')
+
         train(model)
         test(model)
